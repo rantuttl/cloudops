@@ -21,6 +21,7 @@ import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/serializer"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/apimachinery/registered"
+	"github.com/rantuttl/cloudops/apimachinery/pkg/apimachinery/announced"
 )
 
 // Registry is an instance of an API registry.  This is an interim step to start removing the idea of a global
@@ -34,3 +35,6 @@ var Codecs = serializer.NewCodecFactory(Scheme)
 
 // ParameterCodec handles versioning of objects that are converted to query parameters.
 var ParameterCodec = runtime.NewParameterCodec(Scheme)
+
+// GroupFactoryRegistry is the APIGroupFactoryRegistry (overlaps a bit with Registry, see comments in package 'announced' for details)
+var GroupFactoryRegistry = make(announced.APIGroupFactoryRegistry)

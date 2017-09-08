@@ -19,6 +19,7 @@ import (
 	"github.com/rantuttl/cloudops/apiserver/pkg/apigroups/core"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
+	v1meta "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
 )
 
 // SchemeGroupVersion is group version used to register these objects
@@ -35,8 +36,10 @@ func addKnownTypes(scheme *runtime.Scheme) error {
         scheme.AddKnownTypes(SchemeGroupVersion,
                 &core.Account{},
                 &core.AccountList{},
+		// Add more types to group 'core' as needed. See also apiserver/pkg/apigroups/core/v1/types.go
         )
 
-	//v1meta.AddToGroupVersion(scheme, SchemeGroupVersion)
+	// Do some extra stuff for our scheme
+	v1meta.AddToGroupVersion(scheme, SchemeGroupVersion)
         return nil
 }

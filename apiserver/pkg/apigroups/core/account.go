@@ -13,33 +13,28 @@
    under the License.
 */
 
-// Internal APIVersion
-
 package core
 
 import (
-	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 )
 
-const GroupName = "core"
+func (obj *Account) GetObjectKind() schema.ObjectKind { return obj }
 
-// SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: runtime.APIVersionInternal}
+func (obj *Account) GroupVersionKind() schema.GroupVersionKind {
+        return schema.FromAPIVersionAndKind(obj.APIVersion, obj.Kind)
+}
 
-// TODO (rantuttl): May need func Kind and func Resource (see ./pkg/apis/extensions/register.go)
+func (obj *Account) SetGroupVersionKind(gvk schema.GroupVersionKind) {
+        obj.APIVersion, obj.Kind = gvk.ToAPIVersionAndKind()
+}
 
-var (
-	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
-	AddToScheme   = SchemeBuilder.AddToScheme
-)
+func (obj *AccountList) GetObjectKind() schema.ObjectKind { return obj }
 
-// Adds the list of known types to api.Scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion,
-		&Account{},
-		&AccountList{},
-	)
+func (obj *AccountList) GroupVersionKind() schema.GroupVersionKind {
+        return schema.FromAPIVersionAndKind(obj.APIVersion, obj.Kind)
+}
 
-	return nil
+func (obj *AccountList) SetGroupVersionKind(gvk schema.GroupVersionKind) {
+        obj.APIVersion, obj.Kind = gvk.ToAPIVersionAndKind()
 }

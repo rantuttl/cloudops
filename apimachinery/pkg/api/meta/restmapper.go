@@ -4,7 +4,7 @@
    not use this file except in compliance with the License. You may obtain
    a copy of the License at
   
-        http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
   
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -16,8 +16,42 @@
 package meta
 
 import (
+	"strings"
+
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 )
+
+// Implements RESTScope interface
+type restScope struct {
+	name	     RESTScopeName
+	paramName	string
+	argumentName     string
+	paramDescription string
+}
+
+func (r *restScope) Name() RESTScopeName {
+	return r.name
+}
+func (r *restScope) ParamName() string {
+	return r.paramName
+}
+func (r *restScope) ArgumentName() string {
+	return r.argumentName
+}
+func (r *restScope) ParamDescription() string {
+	return r.paramDescription
+}
+
+var RESTScopeNamespace = &restScope{
+	name:	     RESTScopeNameNamespace,
+	paramName:	"namespaces",
+	argumentName:     "namespace",
+	paramDescription: "object name and auth scope, such as for teams and projects",
+}
+
+var RESTScopeRoot = &restScope{
+	name: RESTScopeNameRoot,
+}
 
 // DefaultRESTMapper exposes mappings between the types defined in a
 // runtime.Scheme. It assumes that all types defined the provided scheme
@@ -61,4 +95,73 @@ func (m *DefaultRESTMapper) KindFor(resource schema.GroupVersionResource) (schem
 	}
 
 	return schema.GroupVersionKind{}, &AmbiguousResourceError{PartialResource: resource, MatchingKinds: kinds}
+}
+
+// NewDefaultRESTMapper initializes a mapping between Kind and APIVersion
+// to a resource name and back based on the objects in a runtime.Scheme
+// and the API conventions. Takes a group name, a priority list of the versions
+// to search when an object has no default version (set empty to return an error),
+// and a function that retrieves the correct metadata for a given version.
+func NewDefaultRESTMapper(defaultGroupVersions []schema.GroupVersion, f VersionInterfacesFunc) *DefaultRESTMapper {
+	resourceToKind := make(map[schema.GroupVersionResource]schema.GroupVersionKind)
+	kindToPluralResource := make(map[schema.GroupVersionKind]schema.GroupVersionResource)
+	kindToScope := make(map[schema.GroupVersionKind]RESTScope)
+	singularToPlural := make(map[schema.GroupVersionResource]schema.GroupVersionResource)
+	pluralToSingular := make(map[schema.GroupVersionResource]schema.GroupVersionResource)
+
+	return &DefaultRESTMapper{
+		resourceToKind:		resourceToKind,
+		kindToPluralResource:	kindToPluralResource,
+		kindToScope:		kindToScope,
+		defaultGroupVersions:	defaultGroupVersions,
+		singularToPlural:	singularToPlural,
+		pluralToSingular:	pluralToSingular,
+		interfacesFunc:		f,
+	}
+}
+
+func (m *DefaultRESTMapper) Add(kind schema.GroupVersionKind, scope RESTScope) {
+	plural, singular := UnsafeGuessKindToResource(kind)
+
+	m.singularToPlural[singular] = plural
+	m.pluralToSingular[plural] = singular
+
+	m.resourceToKind[singular] = kind
+	m.resourceToKind[plural] = kind
+
+	m.kindToPluralResource[kind] = plural
+	m.kindToScope[kind] = scope
+}
+
+// unpluralizedSuffixes is a list of resource suffixes that are the same plural and singular
+// This is only is only necessary because some bits of code are lazy and don't actually use the RESTMapper like they should.
+// TODO eliminate this so that different callers can correctly map to resources.  This probably means updating all
+// callers to use the RESTMapper they mean.
+var unpluralizedSuffixes = []string{}
+
+// UnsafeGuessKindToResource converts Kind to a resource name.
+// Broken. This method only "sort of" works when used outside of this package.  It assumes that Kinds and Resources match
+// and they aren't guaranteed to do so.
+func UnsafeGuessKindToResource(kind schema.GroupVersionKind) ( /*plural*/ schema.GroupVersionResource /*singular*/, schema.GroupVersionResource) {
+	kindName := kind.Kind
+	if len(kindName) == 0 {
+		return schema.GroupVersionResource{}, schema.GroupVersionResource{}
+	}
+	singularName := strings.ToLower(kindName)
+	singular := kind.GroupVersion().WithResource(singularName)
+
+	for _, skip := range unpluralizedSuffixes {
+		if strings.HasSuffix(singularName, skip) {
+			return singular, singular
+		}
+	}
+
+	switch string(singularName[len(singularName)-1]) {
+	case "s":
+		return kind.GroupVersion().WithResource(singularName + "es"), singular
+	case "y":
+		return kind.GroupVersion().WithResource(strings.TrimSuffix(singularName, "y") + "ies"), singular
+	}
+
+	return kind.GroupVersion().WithResource(singularName + "s"), singular
 }

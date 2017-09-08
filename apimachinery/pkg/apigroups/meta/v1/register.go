@@ -13,19 +13,16 @@
    under the License.
 */
 
-package core
+package v1
 
 import (
-	v1meta "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
+	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
+	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 )
 
-type Account struct {
-	v1meta.TypeMeta `json:",inline"`
-	v1meta.ObjectMeta `json:"metadata,omitempty"`
-}
+func AddToGroupVersion(scheme *runtime.Scheme, groupVersion schema.GroupVersion) {
+	// TODO (rantuttl): Handle watch events here in the future
+	// Stubbed for now...
+	// See ./staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/register.go
 
-type AccountList struct {
-	v1meta.TypeMeta `json:",inline"`
-	v1meta.ListMeta `json:"metadata,omitempty"`
-	Items []Account `json:"items"`
 }
