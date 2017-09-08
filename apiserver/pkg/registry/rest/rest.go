@@ -13,14 +13,18 @@
    under the License.
 */
 
-package api
+package rest
 
 import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
-	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/serializer"
 )
 
-var Scheme = runtime.NewScheme()
+// It is expected that objects exported to the RESTful API of apiserver may implement any of the below interfaces.
 
-// Codecs provides access to encoding and decoding for the scheme
-var Codecs = serializer.NewCodecFactory(Scheme)
+// Storage is a generic interface for RESTful storage services.
+// Resources which are exported to the RESTful API of apiserver need to implement this interface. It is expected
+type Storage interface {
+	// New returns an empty object that can be used with Create and Update after request data has been put into it.
+	// This object must be a pointer type for use with Codec.DecodeInto([]byte, runtime.Object)
+	New() runtime.Object
+}

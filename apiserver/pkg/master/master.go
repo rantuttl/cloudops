@@ -18,6 +18,7 @@ package master
 import (
 	"github.com/golang/glog"
 
+	corerest "github.com/rantuttl/cloudops/apiserver/pkg/registry/core/rest"
 	genericregistry "github.com/rantuttl/cloudops/apiserver/pkg/registry/generic"
 	genericapiserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
 	serverstorage "github.com/rantuttl/cloudops/apiserver/pkg/server/storage"
@@ -61,7 +62,9 @@ func (c completedConfig) New() (*Master, error) {
 		GenericAPIServer: s,
 	}
 
-	restStorageProviders := []RESTStorageProvider{}
+	restStorageProviders := []RESTStorageProvider{
+		corerest.RESTStorageProvider{},
+	}
 	m.InstallAPIs(c.Config.APIResourceConfigSource, c.Config.GenericConfig.RESTOptionsGetter, restStorageProviders...)
 
 	return m, nil
@@ -74,5 +77,29 @@ type RESTStorageProvider interface {
 
 // InstallAPIs will install the APIs for the restStorageProviders if they are enabled.
 func (m *Master) InstallAPIs(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter genericregistry.RESTOptionsGetter, restStorageProviders ...RESTStorageProvider) {
-	return
+	apiGroupsInfo := []genericapiserver.APIGroupInfo{}
+
+	for _, restStorageBuilder := range restStorageProviders {
+		groupName := restStorageBuilder.GroupName()
+
+		// TODO (rantuttl): Figure out how to know if group is enabled / disabled
+		// if !apiResourceConfigSource.AnyResourcesForGroupEnabled(groupName) ...
+
+		apiGroupInfo, enabled := restStorageBuilder.NewRESTStorage(apiResourceConfigSource, restOptionsGetter)
+		if !enabled {
+			glog.Warningf("Problem initializing API group \"%q\", skipping.", groupName)
+			continue
+		}
+
+		// TODO (rantuttl): Figure out how to implement post-start hooks if necessary
+		//
+
+		apiGroupsInfo = append(apiGroupsInfo, apiGroupInfo)
+	}
+
+	for i := range apiGroupsInfo {
+		if err := m.GenericAPIServer.InstallAPIGroup(&apiGroupsInfo[i]); err != nil {
+			glog.Fatalf("Error in registering group versions: %v", err)
+		}
+	}
 }

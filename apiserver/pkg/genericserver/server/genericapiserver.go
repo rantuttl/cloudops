@@ -16,11 +16,18 @@ package server
 
 import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
+	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/serializer"
+	"github.com/rantuttl/cloudops/apimachinery/pkg/apimachinery"
+	"github.com/rantuttl/cloudops/apimachinery/pkg/apimachinery/registered"
+	"github.com/rantuttl/cloudops/apiserver/pkg/registry/rest"
 )
 
 // FIXME (rantuttl): Stub for now
 // Info about an API group.
 type APIGroupInfo struct {
+	GroupMeta apimachinery.GroupMeta
+	// Info about the resources in this group. Its a map from version to resource to the storage.
+	VersionedResourcesStorageMap map[string]map[string]rest.Storage
 }
 
 type GenericAPIServer struct {
@@ -63,4 +70,21 @@ func (s preparedGenericAPIServer) Run(stopCh <-chan struct{}) error {
 // returned if the secure port cannot be listened on.
 func (s preparedGenericAPIServer) NonBlockingRun(stopCh <-chan struct{}) error {
 	return nil
+}
+
+// Exposes the given api group in the API.
+func (s *GenericAPIServer) InstallAPIGroup(apiGroupInfo *APIGroupInfo) error {
+
+	return nil
+}
+
+// NewDefaultAPIGroupInfo returns an APIGroupInfo stubbed with "normal" values
+// exposed for easier composition from other packages
+func NewDefaultAPIGroupInfo(group string, registry *registered.APIRegistrationManager, scheme *runtime.Scheme, parameterCodec runtime.ParameterCodec, codecs serializer.CodecFactory) APIGroupInfo {
+	groupMeta := registry.GroupOrDie(group)
+
+	return APIGroupInfo{
+		GroupMeta:			*groupMeta,
+		VersionedResourcesStorageMap:	map[string]map[string]rest.Storage{},
+	}
 }
