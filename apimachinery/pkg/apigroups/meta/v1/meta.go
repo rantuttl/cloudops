@@ -48,9 +48,8 @@ type Object interface {
 	SetCreationTimestamp(timestamp types.Time)
 	GetDeletionTimestamp() *types.Time
 	SetDeletionTimestamp(timestamp *types.Time)
-	// TODO (rantuttl): Do we need this
-	//GetDeletionGracePeriodSeconds() *int64
-	//SetDeletionGracePeriodSeconds(*int64)
+	GetDeletionGracePeriodSeconds() *int64
+	SetDeletionGracePeriodSeconds(*int64)
 	GetLabels() map[string]string
 	SetLabels(labels map[string]string)
 	GetAnnotations() map[string]string
@@ -136,12 +135,10 @@ func (meta *ObjectMeta) GetDeletionTimestamp() *types.Time { return meta.Deletio
 func (meta *ObjectMeta) SetDeletionTimestamp(deletionTimestamp *types.Time) {
 	meta.DeletionTimestamp = deletionTimestamp
 }
-/* TODO (rantuttl): Do we need this? Add to types.go on ObjectMeta
 func (meta *ObjectMeta) GetDeletionGracePeriodSeconds() *int64 { return meta.DeletionGracePeriodSeconds }
 func (meta *ObjectMeta) SetDeletionGracePeriodSeconds(deletionGracePeriodSeconds *int64) {
 	meta.DeletionGracePeriodSeconds = deletionGracePeriodSeconds
 }
-*/
 func (meta *ObjectMeta) GetLabels() map[string]string                 { return meta.Labels }
 func (meta *ObjectMeta) SetLabels(labels map[string]string)           { meta.Labels = labels }
 func (meta *ObjectMeta) GetAnnotations() map[string]string            { return meta.Annotations }

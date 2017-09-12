@@ -13,22 +13,30 @@
    under the License.
 */
 
-package options
+package uuid
 
-// Validate checks ServerRunOptions and return a slice of found errors.
-func (options *ServerRunOptions) Validate() []error {
-	var errors []error
-	if errs := options.Backend.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
+import (
+	"sync"
+
+	"github.com/pborman/uuid"
+
+	"github.com/rantuttl/cloudops/apimachinery/pkg/types"
+)
+
+var uuidLock sync.Mutex
+var lastUUID uuid.UUID
+
+func NewUUID() types.UID {
+	uuidLock.Lock()
+	defer uuidLock.Unlock()
+	result := uuid.NewUUID()
+	// The UUID package is naive and can generate identical UUIDs if the
+	// time interval is quick enough.
+	// The UUID uses 100 ns increments so it's short enough to actively
+	// wait for a new value.
+	for uuid.Equal(lastUUID, result) == true {
+		result = uuid.NewUUID()
 	}
-	if errs := options.SecureServing.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.Authentication.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.InsecureServing.Validate("insecure-port"); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	return errors
+	lastUUID = result
+	return types.UID(result.String())
 }

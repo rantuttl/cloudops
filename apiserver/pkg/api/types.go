@@ -4,7 +4,7 @@
    not use this file except in compliance with the License. You may obtain
    a copy of the License at
   
-	http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
   
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -13,7 +13,9 @@
    under the License.
 */
 
-package core
+// keep in-sync with apiserver/pkg/apigroups/core/types.go
+
+package api
 
 import (
 	v1meta "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
@@ -31,18 +33,18 @@ const (
 )
 
 type Account struct {
-	v1meta.TypeMeta `json:",inline"`
-	v1meta.ObjectMeta `json:"metadata,omitempty"`
-	Spec AccountSpec `json:"spec,omitempty"`
-	Status AccountStatus `json:"status,omitempty"`
+	v1meta.TypeMeta
+	v1meta.ObjectMeta
+	Spec AccountSpec
+	Status AccountStatus
 }
 
 type AccountSpec struct {
-	// TODO (rantuttl): add additional info as needed about accout specifics
+	// TODO (rantuttl): add additional info as needed about account specifics
 }
 
 type AccountList struct {
-	v1meta.TypeMeta `json:",inline"`
-	v1meta.ListMeta `json:"metadata,omitempty"`
-	Items []Account `json:"items"`
+	v1meta.TypeMeta
+	v1meta.ListMeta
+	Items []Account
 }

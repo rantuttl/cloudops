@@ -4,7 +4,7 @@
    not use this file except in compliance with the License. You may obtain
    a copy of the License at
   
-        http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
   
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -16,17 +16,27 @@
 package generic
 
 import (
+	"github.com/rantuttl/cloudops/apiserver/pkg/backend"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 )
 
 // RESTOptions is set of configuration options to generic registries.
 type RESTOptions struct {
-	// TODO (rantuttl): This is a good place to store the references to CAL
+	BackendConfig		*backend.Config
+	Decorator		BackendDecorator
 	ResourcePrefix		string
 }
 
 type RESTOptionsGetter interface {
 	GetRESTOptions(resource schema.GroupResource) (RESTOptions, error)
+}
+
+// StoreOptions is set of configuration options used to complete generic registries.
+type StoreOptions struct {
+	RESTOptions RESTOptionsGetter
+	// FIXME (rantuttl): Decide if we need these
+	//TriggerFunc storage.TriggerPublisherFunc
+	//AttrFunc    storage.AttrFunc
 }
 
 // Implement RESTOptionsGetter so that RESTOptions can directly be used when available (i.e. tests)

@@ -4,7 +4,7 @@
    not use this file except in compliance with the License. You may obtain
    a copy of the License at
   
-        http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
   
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
+	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/serializer"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/apimachinery/registered"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/apimachinery/announced"
@@ -38,3 +39,14 @@ var ParameterCodec = runtime.NewParameterCodec(Scheme)
 
 // GroupFactoryRegistry is the APIGroupFactoryRegistry (overlaps a bit with Registry, see comments in package 'announced' for details)
 var GroupFactoryRegistry = make(announced.APIGroupFactoryRegistry)
+
+// GroupName is the group name use in this package
+const GroupName = ""
+
+// SchemeGroupVersion is group version used to register these objects
+var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: runtime.APIVersionInternal}
+
+// Resource takes an unqualified resource and returns a Group qualified GroupResource
+func Resource(resource string) schema.GroupResource {
+	return SchemeGroupVersion.WithResource(resource).GroupResource()
+}

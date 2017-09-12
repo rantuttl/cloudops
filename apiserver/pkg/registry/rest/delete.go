@@ -13,22 +13,13 @@
    under the License.
 */
 
-package options
+package rest
 
-// Validate checks ServerRunOptions and return a slice of found errors.
-func (options *ServerRunOptions) Validate() []error {
-	var errors []error
-	if errs := options.Backend.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.SecureServing.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.Authentication.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.InsecureServing.Validate("insecure-port"); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	return errors
+import (
+	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
+)
+
+// RESTDeleteStrategy defines deletion behavior on an object that follows API conventions.
+type RESTDeleteStrategy interface {
+	runtime.ObjectTyper
 }

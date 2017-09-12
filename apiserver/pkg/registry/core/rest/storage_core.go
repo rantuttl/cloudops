@@ -19,7 +19,8 @@ import (
 	"github.com/rantuttl/cloudops/apiserver/pkg/api"
 	"github.com/rantuttl/cloudops/apiserver/pkg/apigroups/core"
 	"github.com/rantuttl/cloudops/apiserver/pkg/registry/rest"
-	v1core "github.com/rantuttl/cloudops/apiserver/pkg/apigroups/core/v1"
+	accountstore "github.com/rantuttl/cloudops/apiserver/pkg/registry/core/account/storage"
+	v1core "github.com/rantuttl/cloudops/apiserver/pkg/api/core/v1"
 	serverstorage "github.com/rantuttl/cloudops/apiserver/pkg/server/storage"
 	genericregistry "github.com/rantuttl/cloudops/apiserver/pkg/registry/generic"
 	genericapiserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
@@ -40,9 +41,13 @@ func (p RESTStorageProvider) NewRESTStorage(apiResourceConfigSource serverstorag
 }
 
 func (p RESTStorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter genericregistry.RESTOptionsGetter) map[string]rest.Storage {
-	//version := v1core.SchemeGroupVersion
+	version := v1core.SchemeGroupVersion
 
 	storage := map[string]rest.Storage{}
+
+	if apiResourceConfigSource.ResourceEnabled(version.WithResource("accounts")) {
+		storage["accounts"] = accountstore.NewREST(restOptionsGetter)
+	}
 
 	return storage
 }

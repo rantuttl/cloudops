@@ -4,7 +4,7 @@
    not use this file except in compliance with the License. You may obtain
    a copy of the License at
   
-        http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
   
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -33,18 +33,18 @@ type APIGroupInfo struct {
 type GenericAPIServer struct {
 	SecureServingInfo *SecureServingInfo
 	// numerical ports, set after listening
-        effectiveSecurePort int
+	effectiveSecurePort int
 	Serializer runtime.NegotiatedSerializer
 	Handler *APIServerHandler
 }
 
 // EffectiveSecurePort returns the secure port we bound to.
 func (s *GenericAPIServer) EffectiveSecurePort() int {
-        return s.effectiveSecurePort
+	return s.effectiveSecurePort
 }
 
 type preparedGenericAPIServer struct {
-        *GenericAPIServer
+	*GenericAPIServer
 }
 
 // PrepareRun does post API installation setup steps.
@@ -57,13 +57,13 @@ func (s *GenericAPIServer) PrepareRun() preparedGenericAPIServer {
 // Run spawns the secure http server. It only returns if stopCh is closed
 // or the secure port cannot be listened on initially.
 func (s preparedGenericAPIServer) Run(stopCh <-chan struct{}) error {
-        err := s.NonBlockingRun(stopCh)
-        if err != nil {
-                return err
-        }
+	err := s.NonBlockingRun(stopCh)
+	if err != nil {
+		return err
+	}
 
-        <-stopCh
-        return nil
+	<-stopCh
+	return nil
 }
 
 // NonBlockingRun spawns the secure http server. An error is

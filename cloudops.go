@@ -16,21 +16,21 @@
 package main
 
 import (
-	"log"
+	//"log"
 	"math/rand"
 	"time"
 	"fmt"
 	"os"
-	"net/http"
+	//"net/http"
 
-	"github.com/rantuttl/cloudops/resources"
+	//"github.com/rantuttl/cloudops/resources"
 	"github.com/rantuttl/cloudops/apiserver/pkg/util/logs"
 	"github.com/rantuttl/cloudops/apiserver/pkg/util/flag"
 	"github.com/rantuttl/cloudops/cmd/app"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/util/wait"
 	runoptions "github.com/rantuttl/cloudops/cmd/app/options"
 
-	"github.com/emicklei/go-restful"
+	//"github.com/emicklei/go-restful"
 	"github.com/spf13/pflag"
 )
 
@@ -57,10 +57,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	wsContainer := restful.NewContainer()
+	//wsContainer := restful.NewContainer()
 
-	a := resources.AccountResource{map[string]resources.Account{}}
-	a.Register(wsContainer)
+	//a := resources.AccountResource{map[string]resources.Account{}}
+	//a.Register(wsContainer)
 
 	// Optionally, you can install the Swagger Service which provides a nice Web UI on your REST API
 	// You need to download the Swagger HTML5 assets and change the FilePath location in the config below.
@@ -75,7 +75,7 @@ func main() {
 	//	SwaggerFilePath: "/Users/emicklei/xProjects/swagger-ui/dist"}
 	//swagger.RegisterSwaggerService(config, wsContainer)
 
-	log.Print("Start listening on localhost:8080")
-	server := &http.Server{Addr: ":8080", Handler: wsContainer}
-	log.Fatal(server.ListenAndServe())
+	//log.Print("Start listening on localhost:8080")
+	//server := &http.Server{Addr: ":8080", Handler: wsContainer}
+	//log.Fatal(server.ListenAndServe())
 }

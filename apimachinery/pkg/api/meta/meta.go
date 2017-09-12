@@ -275,3 +275,212 @@ func (resourceAccessor) SetResourceVersion(obj runtime.Object, version string) e
 	accessor.SetResourceVersion(version)
 	return nil
 }
+
+// genericAccessor contains pointers to strings that can modify an arbitrary
+// struct and implements the Accessor interface.
+type genericAccessor struct {
+	namespace *string
+	name	        *string
+	generateName    *string
+	uid	        *types.UID
+	apiVersion	*string
+	kind	      *string
+	resourceVersion   *string
+	selfLink	  *string
+	creationTimestamp *types.Time
+	deletionTimestamp **types.Time
+	labels	    *map[string]string
+	annotations       *map[string]string
+	// FIXME (rantuttl): do we need this???
+	//ownerReferences   reflect.Value
+	finalizers	*[]string
+}
+
+func (a genericAccessor) GetNamespace() string {
+	if a.namespace == nil {
+		return ""
+	}
+	return *a.namespace
+}
+
+func (a genericAccessor) SetNamespace(namespace string) {
+	if a.namespace == nil {
+		return
+	}
+	*a.namespace = namespace
+}
+
+func (a genericAccessor) GetName() string {
+	if a.name == nil {
+		return ""
+	}
+	return *a.name
+}
+
+func (a genericAccessor) SetName(name string) {
+	if a.name == nil {
+		return
+	}
+	*a.name = name
+}
+
+func (a genericAccessor) GetGenerateName() string {
+	if a.generateName == nil {
+		return ""
+	}
+	return *a.generateName
+}
+
+func (a genericAccessor) SetGenerateName(generateName string) {
+	if a.generateName == nil {
+		return
+	}
+	*a.generateName = generateName
+}
+
+func (a genericAccessor) GetUID() types.UID {
+	if a.uid == nil {
+		return ""
+	}
+	return *a.uid
+}
+
+func (a genericAccessor) SetUID(uid types.UID) {
+	if a.uid == nil {
+		return
+	}
+	*a.uid = uid
+}
+
+func (a genericAccessor) GetAPIVersion() string {
+	return *a.apiVersion
+}
+
+func (a genericAccessor) SetAPIVersion(version string) {
+	*a.apiVersion = version
+}
+
+func (a genericAccessor) GetKind() string {
+	return *a.kind
+}
+
+func (a genericAccessor) SetKind(kind string) {
+	*a.kind = kind
+}
+
+func (a genericAccessor) GetResourceVersion() string {
+	return *a.resourceVersion
+}
+
+func (a genericAccessor) SetResourceVersion(version string) {
+	*a.resourceVersion = version
+}
+
+func (a genericAccessor) GetSelfLink() string {
+	return *a.selfLink
+}
+
+func (a genericAccessor) SetSelfLink(selfLink string) {
+	*a.selfLink = selfLink
+}
+
+func (a genericAccessor) GetCreationTimestamp() types.Time {
+	return *a.creationTimestamp
+}
+
+func (a genericAccessor) SetCreationTimestamp(timestamp types.Time) {
+	*a.creationTimestamp = timestamp
+}
+
+func (a genericAccessor) GetDeletionTimestamp() *types.Time {
+	return *a.deletionTimestamp
+}
+
+func (a genericAccessor) SetDeletionTimestamp(timestamp *types.Time) {
+	*a.deletionTimestamp = timestamp
+}
+
+func (a genericAccessor) GetLabels() map[string]string {
+	if a.labels == nil {
+		return nil
+	}
+	return *a.labels
+}
+
+func (a genericAccessor) SetLabels(labels map[string]string) {
+	*a.labels = labels
+}
+
+func (a genericAccessor) GetAnnotations() map[string]string {
+	if a.annotations == nil {
+		return nil
+	}
+	return *a.annotations
+}
+
+func (a genericAccessor) SetAnnotations(annotations map[string]string) {
+	if a.annotations == nil {
+		emptyAnnotations := make(map[string]string)
+		a.annotations = &emptyAnnotations
+	}
+	*a.annotations = annotations
+}
+
+func (a genericAccessor) GetFinalizers() []string {
+	if a.finalizers == nil {
+		return nil
+	}
+	return *a.finalizers
+}
+
+func (a genericAccessor) SetFinalizers(finalizers []string) {
+	*a.finalizers = finalizers
+}
+
+/* FIXME (rantuttl): do we need this???
+func (a genericAccessor) GetOwnerReferences() []v1meta.OwnerReference {
+	var ret []v1meta.OwnerReference
+	s := a.ownerReferences
+	if s.Kind() != reflect.Ptr || s.Elem().Kind() != reflect.Slice {
+		glog.Errorf("expect %v to be a pointer to slice", s)
+		return ret
+	}
+	s = s.Elem()
+	// Set the capacity to one element greater to avoid copy if the caller later append an element.
+	ret = make([]v1meta.OwnerReference, s.Len(), s.Len()+1)
+	for i := 0; i < s.Len(); i++ {
+		if err := extractFromOwnerReference(s.Index(i), &ret[i]); err != nil {
+			glog.Errorf("extractFromOwnerReference failed: %v", err)
+			return ret
+		}
+	}
+	return ret
+}
+
+func (a genericAccessor) SetOwnerReferences(references []v1meta.OwnerReference) {
+	s := a.ownerReferences
+	if s.Kind() != reflect.Ptr || s.Elem().Kind() != reflect.Slice {
+		glog.Errorf("expect %v to be a pointer to slice", s)
+	}
+	s = s.Elem()
+	newReferences := reflect.MakeSlice(s.Type(), len(references), len(references))
+	for i := 0; i < len(references); i++ {
+		if err := setOwnerReference(newReferences.Index(i), &references[i]); err != nil {
+			glog.Errorf("setOwnerReference failed: %v", err)
+			return
+		}
+	}
+	s.Set(newReferences)
+}
+
+// extractFromTypeMeta extracts pointers to version and kind fields from an object
+func extractFromTypeMeta(v reflect.Value, a *genericAccessor) error {
+	if err := runtime.FieldPtr(v, "APIVersion", &a.apiVersion); err != nil {
+		return err
+	}
+	if err := runtime.FieldPtr(v, "Kind", &a.kind); err != nil {
+		return err
+	}
+	return nil
+}
+*/

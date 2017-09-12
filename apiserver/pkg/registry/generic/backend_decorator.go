@@ -13,22 +13,26 @@
    under the License.
 */
 
-package options
+package generic
 
-// Validate checks ServerRunOptions and return a slice of found errors.
-func (options *ServerRunOptions) Validate() []error {
-	var errors []error
-	if errs := options.Backend.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
+import (
+	"github.com/golang/glog"
+
+	"github.com/rantuttl/cloudops/apiserver/pkg/backend"
+	"github.com/rantuttl/cloudops/apiserver/pkg/backend/factory"
+)
+
+type BackendDecorator func(
+	config *backend.Config) (backend.Interface)
+
+func UndecoratedBackend(config *backend.Config) (backend.Interface) {
+	return NewBackend(config)
+}
+
+func NewBackend(config *backend.Config) (backend.Interface) {
+	s, err := factory.Create(*config)
+	if err != nil {
+		glog.Fatalf("Unable to create backend: config (%v), err (%v)", config, err)
 	}
-	if errs := options.SecureServing.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.Authentication.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.InsecureServing.Validate("insecure-port"); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	return errors
+	return s
 }

@@ -18,6 +18,7 @@ package master
 import (
 	"github.com/golang/glog"
 
+	corev1 "github.com/rantuttl/cloudops/apiserver/pkg/api/core/v1"
 	corerest "github.com/rantuttl/cloudops/apiserver/pkg/registry/core/rest"
 	genericregistry "github.com/rantuttl/cloudops/apiserver/pkg/registry/generic"
 	genericapiserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
@@ -82,8 +83,10 @@ func (m *Master) InstallAPIs(apiResourceConfigSource serverstorage.APIResourceCo
 	for _, restStorageBuilder := range restStorageProviders {
 		groupName := restStorageBuilder.GroupName()
 
-		// TODO (rantuttl): Figure out how to know if group is enabled / disabled
-		// if !apiResourceConfigSource.AnyResourcesForGroupEnabled(groupName) ...
+		if !apiResourceConfigSource.AnyResourcesForGroupEnabled(groupName) {
+			glog.V(1).Infof("Skipping disabled API group %q.", groupName)
+			continue
+		}
 
 		apiGroupInfo, enabled := restStorageBuilder.NewRESTStorage(apiResourceConfigSource, restOptionsGetter)
 		if !enabled {
@@ -102,4 +105,19 @@ func (m *Master) InstallAPIs(apiResourceConfigSource serverstorage.APIResourceCo
 			glog.Fatalf("Error in registering group versions: %v", err)
 		}
 	}
+}
+
+// Sets the default API Config.
+// TODO (rantuttl): Consider a command line runtime option that can be merged with this. May aid testing.
+func DefaultAPIResourceConfigSource() *serverstorage.ResourceConfig {
+	ret := serverstorage.NewResourceConfig()
+
+	ret.EnableVersions(
+		corev1.SchemeGroupVersion,
+	)
+
+	ret.EnableResources(
+		corev1.SchemeGroupVersion.WithResource("accounts"),
+	)
+	return ret
 }

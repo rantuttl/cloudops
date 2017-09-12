@@ -13,22 +13,16 @@
    under the License.
 */
 
-package options
+package factory
 
-// Validate checks ServerRunOptions and return a slice of found errors.
-func (options *ServerRunOptions) Validate() []error {
-	var errors []error
-	if errs := options.Backend.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.SecureServing.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.Authentication.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.InsecureServing.Validate("insecure-port"); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	return errors
+import (
+	"github.com/rantuttl/cloudops/apiserver/pkg/backend"
+	"github.com/rantuttl/cloudops/apiserver/pkg/backend/cal"
+)
+
+func newBackend(c backend.Config) backend.Interface {
+	// TODO (rantuttl): This is where we establish connection to the backend system using CAL client libraries
+
+	// FIXME (rantuttl): Stub code for now
+	return cal.NewCalBackend()
 }

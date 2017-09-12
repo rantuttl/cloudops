@@ -96,7 +96,9 @@ func CreateMasterAPIServerConfig(s *options.ServerRunOptions) (*master.Config, *
 
 	config := &master.Config{
 		GenericConfig: genericConfig,
-		APIResourceConfigSource: storageFactory.APIResourceConfigSource,
+		// FIXME (rantuttl): does this config belong in storageFactory
+		//APIResourceConfigSource: storageFactory.APIResourceConfigSource,
+		APIResourceConfigSource: master.DefaultAPIResourceConfigSource(),
 		StorageFactory: storageFactory,
 		// TODO (rantuttl): Put future config info here
 	}
@@ -107,6 +109,9 @@ func BuildGenericConfig(s *options.ServerRunOptions) (*genericapiserver.Config, 
 
 	config := genericapiserver.NewConfig(api.Codecs)
 	if err := s.GenericServerRunOptions.ApplyTo(config); err != nil {
+		return nil, nil, err
+	}
+	if err := s.Backend.ApplyTo(config); err != nil {
 		return nil, nil, err
 	}
 	insecureServingOptions, err := s.InsecureServing.ApplyTo(config)

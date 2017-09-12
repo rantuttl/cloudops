@@ -13,22 +13,17 @@
    under the License.
 */
 
-package options
+package backend
 
-// Validate checks ServerRunOptions and return a slice of found errors.
-func (options *ServerRunOptions) Validate() []error {
-	var errors []error
-	if errs := options.Backend.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.SecureServing.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.Authentication.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.InsecureServing.Validate("insecure-port"); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	return errors
+import (
+	"golang.org/x/net/context"
+
+	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
+)
+
+type Interface interface {
+	// Create adds a new object at a key unless it already exists.
+	Create(ctx context.Context, key string, obj, out runtime.Object, ttl uint64) error
+
+	Get(ctx context.Context, key string, resourceVersion string, objPtr runtime.Object, ignoreNotFound bool) error
 }

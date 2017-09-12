@@ -23,15 +23,17 @@ import (
 	"github.com/spf13/pflag"
 
 	genericopts "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/options"
-	authopts "github.com/rantuttl/cloudops/apiserver/pkg/server/options"
+	serveropts "github.com/rantuttl/cloudops/apiserver/pkg/server/options"
+	"github.com/rantuttl/cloudops/apiserver/pkg/backend"
 )
 
 // ServerRunOptions runs an apiserver.
 type ServerRunOptions struct {
 	GenericServerRunOptions *genericopts.ServerRunOptions
+	Backend			*serveropts.BackendOptions
 	SecureServing           *genericopts.SecureServingOptions
 	InsecureServing         *genericopts.InsecureServingOptions
-	Authentication          *authopts.BuiltInAuthenticationOptions
+	Authentication          *serveropts.BuiltInAuthenticationOptions
 
 	EnableLogsHandler         bool
 	EventTTL                  time.Duration
@@ -42,9 +44,10 @@ type ServerRunOptions struct {
 func NewServerRunOptions() *ServerRunOptions {
 	s := ServerRunOptions{
 		GenericServerRunOptions: genericopts.NewServerRunOptions(),
+		Backend:		 serveropts.NewBackendOptions(backend.NewDefaultConfig()),
 		SecureServing:        genericopts.NewSecureServingOptions(),
 		InsecureServing:      genericopts.NewInsecureServingOptions(),
-		Authentication:       authopts.NewBuiltInAuthenticationOptions().WithAll(),
+		Authentication:       serveropts.NewBuiltInAuthenticationOptions().WithAll(),
 
 		EnableLogsHandler: true,
 		EventTTL:          1 * time.Hour,
@@ -56,6 +59,7 @@ func NewServerRunOptions() *ServerRunOptions {
 func (s *ServerRunOptions) AddFlags(fs *pflag.FlagSet) {
 	// Add the generic flags.
 	s.GenericServerRunOptions.AddUniversalFlags(fs)
+	s.Backend.AddFlags(fs)
 	s.SecureServing.AddFlags(fs)
 	s.SecureServing.AddDeprecatedFlags(fs)
 	s.InsecureServing.AddFlags(fs)

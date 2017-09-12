@@ -13,22 +13,17 @@
    under the License.
 */
 
-package options
+package backend
 
-// Validate checks ServerRunOptions and return a slice of found errors.
-func (options *ServerRunOptions) Validate() []error {
-	var errors []error
-	if errs := options.Backend.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.SecureServing.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.Authentication.Validate(); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	if errs := options.InsecureServing.Validate("insecure-port"); len(errs) > 0 {
-		errors = append(errors, errs...)
-	}
-	return errors
+type Config struct {
+	// ServerList is the list of backend servers to connect with.
+	ServerList []string
+	// TLS credentials
+	KeyFile  string
+	CertFile string
+	CAFile   string
+}
+
+func NewDefaultConfig() *Config {
+	return &Config{}
 }
