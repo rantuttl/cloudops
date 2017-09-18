@@ -13,26 +13,17 @@
    under the License.
 */
 
-package backend
+package fields
 
-import (
-	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
-)
+import "github.com/rantuttl/cloudops/apimachinery/pkg/selection"
 
-type Config struct {
-	// ServerList is the list of backend servers to connect with.
-	ServerList []string
-	// TLS credentials
-	KeyFile  string
-	CertFile string
-	CAFile   string
-	Codec  runtime.Codec
-	Copier runtime.ObjectCopier
-}
+// Requirements is AND of all requirements.
+type Requirements []Requirement
 
-func NewDefaultConfig(copier runtime.ObjectCopier, codec runtime.Codec) *Config {
-	return &Config{
-		Codec:	codec,
-		Copier:	copier,
-	}
+// Requirement contains a field, a value, and an operator that relates the field and value.
+// This is currently for reading internal selection information of field selector.
+type Requirement struct {
+	Operator selection.Operator
+	Field    string
+	Value    string
 }

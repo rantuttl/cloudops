@@ -22,9 +22,11 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"github.com/rantuttl/cloudops/apiserver/pkg/api"
 	genericopts "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/options"
 	serveropts "github.com/rantuttl/cloudops/apiserver/pkg/server/options"
 	"github.com/rantuttl/cloudops/apiserver/pkg/backend"
+	corev1 "github.com/rantuttl/cloudops/apiserver/pkg/apigroups/core/v1"
 )
 
 // ServerRunOptions runs an apiserver.
@@ -44,10 +46,10 @@ type ServerRunOptions struct {
 func NewServerRunOptions() *ServerRunOptions {
 	s := ServerRunOptions{
 		GenericServerRunOptions: genericopts.NewServerRunOptions(),
-		Backend:		 serveropts.NewBackendOptions(backend.NewDefaultConfig()),
-		SecureServing:        genericopts.NewSecureServingOptions(),
-		InsecureServing:      genericopts.NewInsecureServingOptions(),
-		Authentication:       serveropts.NewBuiltInAuthenticationOptions().WithAll(),
+		Backend: serveropts.NewBackendOptions(backend.NewDefaultConfig(api.Scheme, api.Codecs.LegacyCodec(corev1.SchemeGroupVersion))),
+		SecureServing: genericopts.NewSecureServingOptions(),
+		InsecureServing: genericopts.NewInsecureServingOptions(),
+		Authentication:  serveropts.NewBuiltInAuthenticationOptions().WithAll(),
 
 		EnableLogsHandler: true,
 		EventTTL:          1 * time.Hour,

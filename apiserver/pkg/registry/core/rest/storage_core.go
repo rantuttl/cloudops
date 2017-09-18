@@ -45,6 +45,8 @@ func (p RESTStorageProvider) v1Storage(apiResourceConfigSource serverstorage.API
 
 	storage := map[string]rest.Storage{}
 
+	// If a resource has a subresource, it should be noted as "resource/subresource". This is picked up in
+	// apiserver/pkg/endpoints/installer.go during API installation.
 	if apiResourceConfigSource.ResourceEnabled(version.WithResource("accounts")) {
 		storage["accounts"] = accountstore.NewREST(restOptionsGetter)
 	}

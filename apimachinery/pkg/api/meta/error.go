@@ -4,7 +4,7 @@
    not use this file except in compliance with the License. You may obtain
    a copy of the License at
   
-        http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
   
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -38,4 +38,22 @@ func (e *AmbiguousResourceError) Error() string {
 		return fmt.Sprintf("%v matches multiple resources %v", e.PartialResource, e.MatchingResources)
 	}
 	return fmt.Sprintf("%v matches multiple resources or kinds", e.PartialResource)
+}
+
+// NoKindMatchError is returned if the RESTMapper can't find any match for a kind
+type NoKindMatchError struct {
+	PartialKind schema.GroupVersionKind
+}
+
+func (e *NoKindMatchError) Error() string {
+	return fmt.Sprintf("no matches for %v", e.PartialKind)
+}
+
+// NoResourceMatchError is returned if the RESTMapper can't find any match for a resource
+type NoResourceMatchError struct {
+	PartialResource schema.GroupVersionResource
+}
+
+func (e *NoResourceMatchError) Error() string {
+	return fmt.Sprintf("no matches for %v", e.PartialResource)
 }

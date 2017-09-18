@@ -48,6 +48,13 @@ type Store struct {
 	// QualifiedResource is the pluralized name of the resource.
 	QualifiedResource schema.GroupResource
 
+        // Decorator is an optional exit hook on an object returned from the
+        // underlying storage (e.g., Get). The returned object could be an
+	// individual object or list type. Decorator is intended for
+        // integrations that are above storage and should only be used for
+        // specific cases where storage of the value is not appropriate
+	Decorator ObjectFunc
+
 	// CreateStrategy implements resource-specific behavior during creation.
 	CreateStrategy rest.RESTCreateStrategy
 	// AfterCreate implements a further operation to run after a resource is
@@ -271,8 +278,22 @@ func (e *Store) Create(ctx genericapirequest.Context, obj runtime.Object, includ
 }
 
 func (e *Store) Get(ctx genericapirequest.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	// FIXME (rantuttl): Stubbed for now
 	obj := e.NewFunc()
+	key, err := e.KeyFunc(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	if err := e.Backend.Get(ctx, key, options.ResourceVersion, obj, false); err != nil {
+		// TODO (rantuttl): Maybe some better error type determinations
+		return nil, err
+	}
+
+	// Do any requested exit work on the returned object if function is provided by the resource
+	if e.Decorator != nil {
+		if err := e.Decorator(obj); err != nil {
+			return nil, err
+		}
+	}
 
 	return obj, nil
 }

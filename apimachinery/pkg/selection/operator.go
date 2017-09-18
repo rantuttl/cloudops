@@ -13,26 +13,20 @@
    under the License.
 */
 
-package backend
+package selection
 
-import (
-	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
+// Operator represents a key/field's relationship to value(s).
+// See labels.Requirement and fields.Requirement for more details.
+type Operator string
+
+const (
+	DoesNotExist Operator = "!"
+	Equals       Operator = "="
+	DoubleEquals Operator = "=="
+	In           Operator = "in"
+	NotEquals    Operator = "!="
+	NotIn        Operator = "notin"
+	Exists       Operator = "exists"
+	GreaterThan  Operator = "gt"
+	LessThan     Operator = "lt"
 )
-
-type Config struct {
-	// ServerList is the list of backend servers to connect with.
-	ServerList []string
-	// TLS credentials
-	KeyFile  string
-	CertFile string
-	CAFile   string
-	Codec  runtime.Codec
-	Copier runtime.ObjectCopier
-}
-
-func NewDefaultConfig(copier runtime.ObjectCopier, codec runtime.Codec) *Config {
-	return &Config{
-		Codec:	codec,
-		Copier:	copier,
-	}
-}

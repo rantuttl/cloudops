@@ -16,8 +16,10 @@
 package meta
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 )
 
@@ -95,6 +97,91 @@ func (m *DefaultRESTMapper) KindFor(resource schema.GroupVersionResource) (schem
 	}
 
 	return schema.GroupVersionKind{}, &AmbiguousResourceError{PartialResource: resource, MatchingKinds: kinds}
+}
+
+// RESTMapping returns a struct representing the resource path and conversion interfaces a
+// RESTClient should use to operate on the provided group/kind in order of versions. If a version search
+// order is not provided, the search order provided to DefaultRESTMapper will be used to resolve which
+// version should be used to access the named group/kind.
+func (m *DefaultRESTMapper) RESTMapping(gk schema.GroupKind, versions ...string) (*RESTMapping, error) {
+	mappings, err := m.RESTMappings(gk, versions...)
+	if err != nil {
+		return nil, err
+	}
+	if len(mappings) == 0 {
+		return nil, &NoKindMatchError{PartialKind: gk.WithVersion("")}
+	}
+	// since we rely on RESTMappings method
+	// take the first match and return to the caller
+	// as this was the existing behavior.
+	return mappings[0], nil
+}
+
+// RESTMappings returns the RESTMappings for the provided group kind. If a version search order
+// is not provided, the search order provided to DefaultRESTMapper will be used.
+func (m *DefaultRESTMapper) RESTMappings(gk schema.GroupKind, versions ...string) ([]*RESTMapping, error) {
+	mappings := make([]*RESTMapping, 0)
+	potentialGVK := make([]schema.GroupVersionKind, 0)
+	hadVersion := false
+
+	// Pick an appropriate version
+	for _, version := range versions {
+		if len(version) == 0 || version == runtime.APIVersionInternal {
+			continue
+		}
+		currGVK := gk.WithVersion(version)
+		hadVersion = true
+		if _, ok := m.kindToPluralResource[currGVK]; ok {
+			potentialGVK = append(potentialGVK, currGVK)
+			break
+		}
+	}
+	// Use the default preferred versions
+	if !hadVersion && len(potentialGVK) == 0 {
+		for _, gv := range m.defaultGroupVersions {
+			if gv.Group != gk.Group {
+				continue
+			}
+			potentialGVK = append(potentialGVK, gk.WithVersion(gv.Version))
+		}
+	}
+
+	if len(potentialGVK) == 0 {
+		return nil, &NoKindMatchError{PartialKind: gk.WithVersion("")}
+	}
+
+	for _, gvk := range potentialGVK {
+		//Ensure we have a REST mapping
+		res, ok := m.kindToPluralResource[gvk]
+		if !ok {
+			continue
+		}
+
+		// Ensure we have a REST scope
+		scope, ok := m.kindToScope[gvk]
+		if !ok {
+			return nil, fmt.Errorf("the provided version %q and kind %q cannot be mapped to a supported scope", gvk.GroupVersion(), gvk.Kind)
+		}
+
+		interfaces, err := m.interfacesFunc(gvk.GroupVersion())
+		if err != nil {
+			return nil, fmt.Errorf("the provided version %q has no relevant versions: %v", gvk.GroupVersion().String(), err)
+		}
+
+		mappings = append(mappings, &RESTMapping{
+			Resource:	  res.Resource,
+			GroupVersionKind: gvk,
+			Scope:		  scope,
+
+			ObjectConvertor:  interfaces.ObjectConvertor,
+			MetadataAccessor: interfaces.MetadataAccessor,
+		})
+	}
+
+	if len(mappings) == 0 {
+		return nil, &NoResourceMatchError{PartialResource: schema.GroupVersionResource{Group: gk.Group, Resource: gk.Kind}}
+	}
+	return mappings, nil
 }
 
 // NewDefaultRESTMapper initializes a mapping between Kind and APIVersion

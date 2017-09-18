@@ -108,7 +108,8 @@ func (m *Master) InstallAPIs(apiResourceConfigSource serverstorage.APIResourceCo
 }
 
 // Sets the default API Config.
-// TODO (rantuttl): Consider a command line runtime option that can be merged with this. May aid testing.
+// TODO (rantuttl): Consider a command line runtime option that can be used to merged command line options
+// with any default settings. May aid testing new or modified APIs.
 func DefaultAPIResourceConfigSource() *serverstorage.ResourceConfig {
 	ret := serverstorage.NewResourceConfig()
 

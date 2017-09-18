@@ -13,26 +13,19 @@
    under the License.
 */
 
-package backend
+package handlers
 
 import (
+	"net/http"
+
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
+	"github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
+	"github.com/rantuttl/cloudops/apiserver/pkg/endpoints/handlers/responsewriters"
 )
 
-type Config struct {
-	// ServerList is the list of backend servers to connect with.
-	ServerList []string
-	// TLS credentials
-	KeyFile  string
-	CertFile string
-	CAFile   string
-	Codec  runtime.Codec
-	Copier runtime.ObjectCopier
-}
+// transformResponseObject takes a loaded object and performs any necessary transformations.
+func transformResponseObject(ctx request.Context, scope RequestScope, req *http.Request, w http.ResponseWriter, statusCode int, result runtime.Object) {
+	// TODO (rantuttl): Put any transformations needed here
 
-func NewDefaultConfig(copier runtime.ObjectCopier, codec runtime.Codec) *Config {
-	return &Config{
-		Codec:	codec,
-		Copier:	copier,
-	}
+	responsewriters.WriteObject(ctx, statusCode, scope.Kind.GroupVersion(), scope.Serializer, result, w, req)
 }

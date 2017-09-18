@@ -16,6 +16,7 @@ package server
 
 import (
 	"fmt"
+	"time"
 	"net"
 	"net/http"
 	"crypto/tls"
@@ -28,6 +29,10 @@ import (
 	apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
 	certutil "github.com/rantuttl/cloudops/apiserver/pkg/util/cert"
 	genericregistry "github.com/rantuttl/cloudops/apiserver/pkg/registry/generic"
+)
+
+const (
+	APIGroupPrefix = "/api"
 )
 
 // Config is a structure used to configure a GenericAPIServer.
@@ -127,6 +132,7 @@ func (c completedConfig) New(name string) (*GenericAPIServer, error) {
 		SecureServingInfo: c.SecureServingInfo,
 		Serializer: c.Serializer,
 		Handler: apiServerHandler,
+		minRequestTimeout: time.Duration(c.MinRequestTimeout) * time.Second,
 	}
 
 	return s, nil

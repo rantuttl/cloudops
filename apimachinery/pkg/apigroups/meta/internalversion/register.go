@@ -13,26 +13,14 @@
    under the License.
 */
 
-package backend
+package internalversion
 
 import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 )
 
-type Config struct {
-	// ServerList is the list of backend servers to connect with.
-	ServerList []string
-	// TLS credentials
-	KeyFile  string
-	CertFile string
-	CAFile   string
-	Codec  runtime.Codec
-	Copier runtime.ObjectCopier
-}
+// Scheme is the registry for any type that adheres to the meta API spec.
+var scheme = runtime.NewScheme()
 
-func NewDefaultConfig(copier runtime.ObjectCopier, codec runtime.Codec) *Config {
-	return &Config{
-		Codec:	codec,
-		Copier:	copier,
-	}
-}
+// ParameterCodec handles versioning of objects that are converted to query parameters.
+var ParameterCodec = runtime.NewParameterCodec(scheme)

@@ -95,10 +95,33 @@ type RESTScope interface {
 	ParamDescription() string
 }
 
+// RESTMapping contains the information needed to deal with objects of a specific
+// resource and kind in a RESTful manner.
+type RESTMapping struct {
+	// Resource is a string representing the name of this resource as a REST client would see it
+	Resource string
+
+	GroupVersionKind schema.GroupVersionKind
+
+	// Scope contains the information needed to deal with REST Resources that are in a resource hierarchy
+	Scope RESTScope
+
+	runtime.ObjectConvertor
+	MetadataAccessor
+}
+
 type RESTMapper interface {
 	// KindFor takes a partial resource and returns the single match.  Returns an error if there are multiple matches
 	KindFor(resource schema.GroupVersionResource) (schema.GroupVersionKind, error)
 
 	// KindsFor takes a partial resource and returns the list of potential kinds in priority order
 	KindsFor(resource schema.GroupVersionResource) ([]schema.GroupVersionKind, error)
+
+	// RESTMapping identifies a preferred resource mapping for the provided group kind.
+	RESTMapping(gk schema.GroupKind, versions ...string) (*RESTMapping, error)
+
+	// RESTMappings returns all resource mappings for the provided group kind if no
+	// version search is provided. Otherwise identifies a preferred resource mapping for
+	// the provided version(s).
+	RESTMappings(gk schema.GroupKind, versions ...string) ([]*RESTMapping, error)
 }

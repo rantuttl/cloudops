@@ -109,13 +109,11 @@ type ObjectMeta struct {
 type Status struct {
 	TypeMeta `json:",inline"`
 	// Standard list metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
 	// +optional
 	ListMeta `json:"metadata,omitempty"`
 
 	// Status of the operation.
 	// One of: "Success" or "Failure".
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
 	// +optional
 	Status string `json:"status,omitempty"`
 	// A human-readable description of the status of this operation.
@@ -459,4 +457,45 @@ type GetOptions struct {
 	// If true, partially initialized resources are included in the response.
 	// +optional
 	IncludeUninitialized bool `json:"includeUninitialized,omitempty"`
+}
+
+// ExportOptions is the query options to the standard REST get call.
+type ExportOptions struct {
+	TypeMeta `json:",inline"`
+	// Should this value be exported.  Export strips fields that a user can not specify.
+	Export bool `json:"export"`
+	// Should the export be exact.  Exact export maintains cluster-specific fields like 'Namespace'.
+	Exact bool `json:"exact"`
+}
+
+// APIResource specifies the name of a resource and whether it is namespaced.
+type APIResource struct {
+	// name is the plural name of the resource.
+	Name string `json:"name"`
+	// singularName is the singular name of the resource.  This allows clients to handle plural and singular opaquely.
+	// The singularName is more correct for reporting status on a single item and both singular and plural are allowed
+	// from the kubectl CLI interface.
+	SingularName string `json:"singularName"`
+	// namespaced indicates if a resource is namespaced or not.
+	Namespaced bool `json:"namespaced"`
+	// kind is the kind for the resource (e.g. 'Foo' is the kind for a resource 'foo')
+	Kind string `json:"kind"`
+	// verbs is a list of supported kube verbs (this includes get, list, watch, create,
+	// update, patch, delete, deletecollection, and proxy)
+	Verbs []string `json:"verbs"`
+	// shortNames is a list of suggested short names of the resource.
+	ShortNames []string `json:"shortNames,omitempty"`
+	// categories is a list of the grouped resources this resource belongs to (e.g. 'all')
+	Categories []string `json:"categories,omitempty"`
+}
+
+// APIResourceList is a list of APIResource, it is used to expose the name of the
+// resources supported in a specific group and version, and if the resource
+// is namespaced.
+type APIResourceList struct {
+	TypeMeta `json:",inline"`
+	// groupVersion is the group and version this APIResourceList is for.
+	GroupVersion string `json:"groupVersion"`
+	// resources contains the name of the resources and if they are namespaced.
+	APIResources []APIResource `json:"resources"`
 }
