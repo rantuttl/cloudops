@@ -16,7 +16,7 @@
 package storage
 
 import (
-	"github.com/rantuttl/cloudops/apiserver/pkg/api"
+	"github.com/rantuttl/cloudops/apiserver/pkg/apigroups/core"
 	"github.com/rantuttl/cloudops/apiserver/pkg/registry/core/account"
 	"github.com/rantuttl/cloudops/apiserver/pkg/registry/generic"
 	genericapirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
@@ -32,9 +32,9 @@ type REST struct {
 func NewREST(optsGetter generic.RESTOptionsGetter) *REST {
 	// FIXME (rantuttl): Partially stubbed for now...
 	store := &genericregistry.Store{
-		NewFunc:		func() runtime.Object { return &api.Account{} },
-		NewListFunc:		func() runtime.Object { return &api.AccountList{} },
-		QualifiedResource:	api.Resource("accounts"),
+		NewFunc:		func() runtime.Object { return &core.Account{} },
+		NewListFunc:		func() runtime.Object { return &core.AccountList{} },
+		QualifiedResource:	core.Resource("accounts"),
 		CreateStrategy:		account.Strategy,
 		UpdateStrategy:		account.Strategy,
 		DeleteStrategy:		account.Strategy,

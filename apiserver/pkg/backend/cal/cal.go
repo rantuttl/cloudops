@@ -35,6 +35,7 @@ func (h *calHelper) Create(ctx context.Context, key string, obj, out runtime.Obj
 	if ctx == nil {
 		glog.Errorf("Context is nil")
 	}
+	glog.Infof("Create key: %s", key)
 
 	return nil
 }
@@ -43,6 +44,7 @@ func (h *calHelper) Get(ctx context.Context, key string, resourceVersion string,
 	if ctx == nil {
 		glog.Errorf("Context is nil")
 	}
+	glog.Infof("Get key: %s", key)
 
 	return nil
 }

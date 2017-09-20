@@ -25,6 +25,7 @@ import (
 	gpath "path"
 
 	"github.com/emicklei/go-restful"
+	"github.com/golang/glog"
 
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
@@ -100,6 +101,10 @@ func (a *APIInstaller) NewWebService() *restful.WebService {
 
 func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storage, ws *restful.WebService) (*metav1.APIResource, error) {
 	// TODO (rantuttl): Handle addmission controls here
+	context := a.group.Context
+	if context == nil {
+		return nil, fmt.Errorf("%v missing Context", a.group.GroupVersion)
+	}
 
 
 	optionsExternalVersion := a.group.GroupVersion
@@ -166,6 +171,9 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 
 	var ctxFn handlers.ContextFunc
 	ctxFn = func(req *http.Request) request.Context {
+		if ctx, ok := context.Get(req); ok {
+			return request.WithUserAgent(ctx, req.Header.Get("User-Agent"))
+		}
 		return request.WithUserAgent(request.NewContext(), req.Header.Get("User-Agent"))
 	}
 
@@ -258,6 +266,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 
 		routes := []*restful.RouteBuilder{}
 
+		glog.V(5).Infof("Installing web service route handler for action: %v", action)
 		switch action.Verb {
 		case "GET": // Get a resource
 			var handler restful.RouteFunction

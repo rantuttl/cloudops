@@ -220,6 +220,30 @@ func getResourceHandler(scope RequestScope, getter getterFunc) http.HandlerFunc 
 
 func ListResource(r rest.Lister, rw rest.Watcher, scope RequestScope, forceWatch bool, minRequestTimeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		namespace, name, err := scope.Namer.Name(req)
+		if err != nil {
+			scope.err(err, w, req)
+			return
+		}
+		ctx := scope.ContextFunc(req)
+		ctx = request.WithNamespace(ctx, namespace)
+
+		hasName := true
+		_, name, err = scope.Namer.Name(req)
+		if err != nil {
+			hasName = false
+		}
+
+		opts := metainternalversion.ListOptions{}
+		if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), scope.MetaGroupVersion, &opts); err != nil {
+			err = errors.NewBadRequest(err.Error())
+			scope.err(err, w, req)
+			return
+		}
+		// FIXME (rantuttl): Finish implemention. ./staging/src/k8s.io/apiserver/pkg/endpoints/handlers/rest.go
+		_ = hasName
+		_ = name
+
 	}
 }
 

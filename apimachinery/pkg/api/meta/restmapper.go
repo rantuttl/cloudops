@@ -17,6 +17,7 @@ package meta
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
@@ -81,9 +82,67 @@ type VersionInterfacesFunc func(version schema.GroupVersion) (*VersionInterfaces
 var _ RESTMapper = &DefaultRESTMapper{}
 
 func (m *DefaultRESTMapper) KindsFor(input schema.GroupVersionResource) ([]schema.GroupVersionKind, error) {
-	// FIXME (rantuttl): Stub for now.
+	resource := coerceResourceForMatching(input)
+	hasResource := len(resource.Resource) > 0
+	hasGroup := len(resource.Group) > 0
+	hasVersion := len(resource.Version) > 0
+
+	if !hasResource {
+		return nil, fmt.Errorf("a resource must be present, got: %v", resource)
+	}
 
 	ret := []schema.GroupVersionKind{}
+	switch {
+	// fully qualified.  Find the exact match
+	case hasGroup && hasVersion:
+		kind, exists := m.resourceToKind[resource]
+		if exists {
+			ret = append(ret, kind)
+		}
+	case hasGroup:
+		foundExactMatch := false
+		requestedGroupResource := resource.GroupResource()
+		for currResource, currKind := range m.resourceToKind {
+			if currResource.GroupResource() == requestedGroupResource {
+				foundExactMatch = true
+				ret = append(ret, currKind)
+			}
+		}
+
+		// if you didn't find an exact match, match on group prefixing. This allows storageclass.storage to match
+		// storageclass.storage.k8s.io
+		if !foundExactMatch {
+			for currResource, currKind := range m.resourceToKind {
+				if !strings.HasPrefix(currResource.Group, requestedGroupResource.Group) {
+					continue
+				}
+				if currResource.Resource == requestedGroupResource.Resource {
+					ret = append(ret, currKind)
+				}
+			}
+
+		}
+
+	case hasVersion:
+		for currResource, currKind := range m.resourceToKind {
+			if currResource.Version == resource.Version && currResource.Resource == resource.Resource {
+				ret = append(ret, currKind)
+			}
+		}
+
+	default:
+		for currResource, currKind := range m.resourceToKind {
+			if currResource.Resource == resource.Resource {
+				ret = append(ret, currKind)
+			}
+		}
+	}
+
+	if len(ret) == 0 {
+		return nil, &NoResourceMatchError{PartialResource: input}
+	}
+
+	sort.Sort(kindByPreferredGroupVersion{ret, m.defaultGroupVersions})
 	return ret, nil
 }
 
@@ -97,6 +156,44 @@ func (m *DefaultRESTMapper) KindFor(resource schema.GroupVersionResource) (schem
 	}
 
 	return schema.GroupVersionKind{}, &AmbiguousResourceError{PartialResource: resource, MatchingKinds: kinds}
+}
+
+type kindByPreferredGroupVersion struct {
+	list      []schema.GroupVersionKind
+	sortOrder []schema.GroupVersion
+}
+
+func (o kindByPreferredGroupVersion) Len() int      { return len(o.list) }
+func (o kindByPreferredGroupVersion) Swap(i, j int) { o.list[i], o.list[j] = o.list[j], o.list[i] }
+func (o kindByPreferredGroupVersion) Less(i, j int) bool {
+	lhs := o.list[i]
+	rhs := o.list[j]
+	if lhs == rhs {
+		return false
+	}
+
+	if lhs.GroupVersion() == rhs.GroupVersion() {
+		return lhs.Kind < rhs.Kind
+	}
+
+	// otherwise, the difference is in the GroupVersion, so we need to sort with respect to the preferred order
+	lhsIndex := -1
+	rhsIndex := -1
+
+	for i := range o.sortOrder {
+		if o.sortOrder[i] == lhs.GroupVersion() {
+			lhsIndex = i
+		}
+		if o.sortOrder[i] == rhs.GroupVersion() {
+			rhsIndex = i
+		}
+	}
+
+	if rhsIndex == -1 {
+		return true
+	}
+
+	return lhsIndex < rhsIndex
 }
 
 // RESTMapping returns a struct representing the resource path and conversion interfaces a
@@ -251,4 +348,14 @@ func UnsafeGuessKindToResource(kind schema.GroupVersionKind) ( /*plural*/ schema
 	}
 
 	return kind.GroupVersion().WithResource(singularName + "s"), singular
+}
+
+// coerceResourceForMatching makes the resource lower case and converts internal versions to unspecified (legacy behavior)
+func coerceResourceForMatching(resource schema.GroupVersionResource) schema.GroupVersionResource {
+	resource.Resource = strings.ToLower(resource.Resource)
+	if resource.Version == runtime.APIVersionInternal {
+		resource.Version = ""
+	}
+
+	return resource
 }

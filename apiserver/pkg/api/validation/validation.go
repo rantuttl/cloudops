@@ -16,7 +16,7 @@
 package validation
 
 import (
-	"github.com/rantuttl/cloudops/apiserver/pkg/api"
+	"github.com/rantuttl/cloudops/apiserver/pkg/apigroups/core"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/api/validation"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/util/validation/field"
 	metav1 "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
@@ -27,7 +27,7 @@ type ValidateNameFunc apimachineryvalidation.ValidateNameFunc
 
 var ValidateAccountName = apimachineryvalidation.NameIsDNSLabel
 
-func ValidateAccount(account *api.Account) field.ErrorList {
+func ValidateAccount(account *core.Account) field.ErrorList {
 	allErrs := ValidateObjectMeta(&account.ObjectMeta, false, ValidateAccountName, field.NewPath("metadata"))
 	// TODO (rantuttl): Add any finalizer checking here
 

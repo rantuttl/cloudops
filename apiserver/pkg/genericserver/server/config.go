@@ -21,11 +21,15 @@ import (
 	"net/http"
 	"crypto/tls"
 	"crypto/x509"
+	"strings"
 
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/serializer"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/version"
-	//genericserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
+	"github.com/rantuttl/cloudops/apimachinery/pkg/util/sets"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/routes"
+	//genericapiserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
+	genericapifilters "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/filters"
 	apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
 	certutil "github.com/rantuttl/cloudops/apiserver/pkg/util/cert"
 	genericregistry "github.com/rantuttl/cloudops/apiserver/pkg/registry/generic"
@@ -97,6 +101,7 @@ func NewConfig(codecs serializer.CodecFactory) *Config {
 		Serializer:			codecs,
 		BuildHandlerChainFunc:		DefaultHandlerChainBuilder,
 		EnableSwaggerUI:		false,
+		RequestContextMapper:		apirequest.NewRequestContextMapper(),
 		MinRequestTimeout:		1800,
 		MaxRequestsInFlight:		400,
 		MaxMutatingRequestsInFlight:	200,
@@ -118,7 +123,7 @@ func (c *Config) SkipComplete() completedConfig {
         return completedConfig{c}
 }
 
-func (c completedConfig) New(name string) (*GenericAPIServer, error) {
+func (c completedConfig) New(name string, delegate DelegationTarget) (*GenericAPIServer, error) {
 
 	if c.Serializer == nil {
 		return nil, fmt.Errorf("Genericapiserver.New() called with config.Serializer == nil")
@@ -127,15 +132,23 @@ func (c completedConfig) New(name string) (*GenericAPIServer, error) {
 		return c.BuildHandlerChainFunc(handler, c.Config)
 	}
 
-	apiServerHandler := NewAPIServerHandler(name, handlerChainBuilder)
+	apiServerHandler := NewAPIServerHandler(name, handlerChainBuilder, delegate.UnprotectedHandler())
 	s := &GenericAPIServer{
 		SecureServingInfo: c.SecureServingInfo,
 		Serializer: c.Serializer,
 		Handler: apiServerHandler,
+		requestContextMapper: c.RequestContextMapper,
 		minRequestTimeout: time.Duration(c.MinRequestTimeout) * time.Second,
 	}
 
+	installAPIs(s, c.Config)
+
 	return s, nil
+}
+
+// install APIs unique to this generic server
+func installAPIs(s *GenericAPIServer, c *Config) {
+	routes.Version{Version: c.Version}.Install(s.Handler.GoRestfulContainer)
 }
 
 
@@ -165,5 +178,16 @@ func DefaultHandlerChainBuilder(apiHandler http.Handler, c *Config) http.Handler
 	//handler = genericapifilters.WithAuthentication(handler, c.RequestContextMapper, c.Authenticator, genericapifilters.Unauthorized(c.RequestContextMapper, c.Serializer, c.SupportsBasicAuth))
 	// etc...
 	// build up the chained handlers here (see filters)
+	// NOTE that this looks very similar to BuildInsecureHandlerChain in apiserver/pkg/genericserver/server/insecure_handler.go
+	handler = genericapifilters.WithRequestInfo(handler, NewRequestInfoResolver(c), c.RequestContextMapper)
+	handler = apirequest.WithRequestContext(handler, c.RequestContextMapper)
 	return handler
+}
+
+func NewRequestInfoResolver(c *Config) *apirequest.RequestInfoFactory {
+	apiPrefixes := sets.NewString(strings.Trim(APIGroupPrefix, "/")) // all possible API prefixes
+
+	return &apirequest.RequestInfoFactory{
+		APIPrefixes:	  apiPrefixes,
+	}
 }

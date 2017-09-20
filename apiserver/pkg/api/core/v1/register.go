@@ -39,6 +39,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		// Add more types to group 'core' as needed. See also apiserver/pkg/apigroups/core/v1/types.go
         )
 
+	// Add common types
+	scheme.AddKnownTypes(SchemeGroupVersion, &v1meta.Status{})
+
 	// Do some extra stuff for our scheme
 	v1meta.AddToGroupVersion(scheme, SchemeGroupVersion)
         return nil

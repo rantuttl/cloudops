@@ -22,8 +22,8 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/user"
-	//genericapifilters "github.com/rantuttl/apiserver/apiserver/pkg/endpoints/filters"
-	//apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
+	genericapifilters "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/filters"
+	apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
 	// FIXME (rantuttl): Remove if not needed
 	//"k8s.io/apiserver/pkg/features"
 	//genericfilters "github.com/rantuttl/apiserver/apiserver/pkg/server/filters"
@@ -51,8 +51,8 @@ func BuildInsecureHandlerChain(apiHandler http.Handler, c *Config) http.Handler 
 	//handler = genericfilters.WithPanicRecovery(handler)
 	//handler = genericfilters.WithTimeoutForNonLongRunningRequests(handler, c.RequestContextMapper, c.LongRunningFunc)
 	//handler = genericfilters.WithMaxInFlightLimit(handler, c.MaxRequestsInFlight, c.MaxMutatingRequestsInFlight, c.RequestContextMapper, c.LongRunningFunc)
-	//handler = genericapifilters.WithRequestInfo(handler, NewRequestInfoResolver(c), c.RequestContextMapper)
-	//handler = apirequest.WithRequestContext(handler, c.RequestContextMapper)
+	handler = genericapifilters.WithRequestInfo(handler, NewRequestInfoResolver(c), c.RequestContextMapper)
+	handler = apirequest.WithRequestContext(handler, c.RequestContextMapper)
 
 	return handler
 }

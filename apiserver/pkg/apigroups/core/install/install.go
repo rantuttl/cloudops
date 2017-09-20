@@ -35,8 +35,10 @@ func Install(groupFactoryRegistry announced.APIGroupFactoryRegistry, registry *r
 		&announced.GroupMetaFactoryArgs{
 			GroupName:			core.GroupName,
 			VersionPreferenceOrder:		[]string{v1.SchemeGroupVersion.Version},
-			ImportPrefix:			"apiserver/api/core", // TODO (rantuttl): What is this doing???
-			RootScopedKinds:		sets.NewString("Account", "AccountList"), // TODO (rantuttl): What is this doing???
+			// package path to API resource Go types, e.g., "Account"
+			ImportPrefix:			"apiserver/pkg/apigroups/core",
+			// the list of kinds that are scoped at the root of the api hierarchy; otherwise it's namespace scoped
+			RootScopedKinds:		sets.NewString("Account", "AccountList"),
 			AddInternalObjectsToScheme:	core.AddToScheme,
 		},
 		announced.VersionToSchemeFunc{

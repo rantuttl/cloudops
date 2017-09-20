@@ -16,7 +16,7 @@
 package app
 
 import (
-	"errors"
+	//"errors"
 
 	"github.com/golang/glog"
 
@@ -49,23 +49,32 @@ func CreateServerChain(runOptions *options.ServerRunOptions, stopCh <-chan struc
 	if err != nil {
 		return nil, err
 	}
-	apiServer, err := CreateAPIServer(config)
+	apiServer, err := CreateAPIServer(config, genericapiserver.EmptyDelegate)
 	if err != nil {
 		return nil, err
 	}
-	apiServer.GenericAPIServer.PrepareRun()
+	//apiServer.GenericAPIServer.PrepareRun()
 
 	// FIXME (rantuttl): make compiler happy until we do something with this
 	_ = &insecureServingOptions
 	// Force return a failure
-	err = errors.New("CreateServerChain early termination")
-	s := &genericapiserver.GenericAPIServer{}
+	//err = errors.New("CreateServerChain early termination")
+	//s := &genericapiserver.GenericAPIServer{}
+	s := apiServer.GenericAPIServer
+
+	// TODO (rantuttl): check insecure serving here
+	if insecureServingOptions != nil {
+		insecureHandlerChain := genericapiserver.BuildInsecureHandlerChain(s.UnprotectedHandler(), config.GenericConfig)
+		if err := genericapiserver.NonBlockingRun(insecureServingOptions, insecureHandlerChain, stopCh); err != nil {
+			return nil, err
+		}
+	}
 	return s, err
 }
 
-func CreateAPIServer(c *master.Config) (*master.Master, error) {
+func CreateAPIServer(c *master.Config, delegateAPITarget genericapiserver.DelegationTarget) (*master.Master, error) {
 
-	s, err := c.Complete().New()
+	s, err := c.Complete().New(delegateAPITarget)
 	if err != nil {
 		return nil, err
 	}

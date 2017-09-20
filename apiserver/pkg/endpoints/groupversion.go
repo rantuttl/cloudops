@@ -26,6 +26,7 @@ import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 	utilerrors "github.com/rantuttl/cloudops/apimachinery/pkg/util/errors"
 	metav1 "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
+	apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
 	"github.com/rantuttl/cloudops/apiserver/pkg/registry/rest"
 )
 
@@ -38,6 +39,7 @@ type APIGroupVersion struct {
 	Typer		runtime.ObjectTyper
 	Creater		runtime.ObjectCreater
 	Linker		runtime.SelfLinker
+	Context		apirequest.RequestContextMapper
 
 	// SubresourceGroupVersionKind contains the GroupVersionKind overrides for each subresource that is
 	// accessible from this API group version.
@@ -49,7 +51,7 @@ func (g *APIGroupVersion) InstallREST(container *restful.Container) error {
 	installer := g.newInstaller()
 	ws := installer.NewWebService()
 	apiResources, registrationErrors := installer.Install(ws)
-	// TODO (rantuttl): Figure out discovery
+	// TODO (rantuttl): Figure out discovery, and add all resources to list all resources, i.e., GET "/"
 	lister := staticLister{apiResources}
 	// make compiler happy
 	_ = lister

@@ -204,7 +204,7 @@ func (m *APIRegistrationManager) InterfacesFor(version schema.GroupVersion) (*me
 func (m *APIRegistrationManager) GroupOrDie(group string) *apimachinery.GroupMeta {
 	groupMeta, found := m.groupMetaMap[group]
 	if !found {
-		panic(fmt.Sprintf("Group %s is not registered.", group))
+		panic(fmt.Sprintf("Group \"%s\" is not registered.", group))
 	}
 	groupMetaCopy := *groupMeta
 	return &groupMetaCopy

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"time"
 	"strings"
+	"net/http"
 
 	"github.com/golang/glog"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/apimachinery"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/apimachinery/registered"
 	"github.com/rantuttl/cloudops/apiserver/pkg/registry/rest"
+	apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
 	genericapi "github.com/rantuttl/cloudops/apiserver/pkg/endpoints"
 )
 
@@ -54,7 +56,42 @@ type GenericAPIServer struct {
 	effectiveSecurePort int
 	Serializer runtime.NegotiatedSerializer
 	Handler *APIServerHandler
+	requestContextMapper apirequest.RequestContextMapper
 	minRequestTimeout time.Duration
+}
+
+type DelegationTarget interface {
+	// UnprotectedHandler returns a handler that is NOT protected by a normal chain
+	UnprotectedHandler() http.Handler
+
+	// RequestContextMapper returns the existing RequestContextMapper.  Because we cannot rewire all existing
+	// uses of this function, this will be used in any delegating API server
+	RequestContextMapper() apirequest.RequestContextMapper
+}
+
+func (s *GenericAPIServer) UnprotectedHandler() http.Handler {
+	// when we delegate, we need the server we're delegating to choose whether or not to use gorestful
+	return s.Handler.Director
+}
+
+func (s *GenericAPIServer) RequestContextMapper() apirequest.RequestContextMapper {
+	return s.requestContextMapper
+}
+
+var EmptyDelegate = emptyDelegate{
+	requestContextMapper: apirequest.NewRequestContextMapper(),
+}
+
+type emptyDelegate struct {
+	requestContextMapper apirequest.RequestContextMapper
+}
+
+func (s emptyDelegate) UnprotectedHandler() http.Handler {
+	return nil
+}
+
+func (s emptyDelegate) RequestContextMapper() apirequest.RequestContextMapper {
+	return s.requestContextMapper
 }
 
 // EffectiveSecurePort returns the secure port we bound to.
@@ -143,6 +180,7 @@ func (s *GenericAPIServer) getAPIGroupVersion(apiGroupInfo *APIGroupInfo, groupV
 		Typer:			apiGroupInfo.Scheme,
 		Creater:		apiGroupInfo.Scheme,
 		Linker:			apiGroupInfo.GroupMeta.SelfLinker,
+		Context:		s.RequestContextMapper(),
 		SubresourceGroupVersionKind: apiGroupInfo.SubresourceGroupVersionKind,
 		MinRequestTimeout:	s.minRequestTimeout,
 	}

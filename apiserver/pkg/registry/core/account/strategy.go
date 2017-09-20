@@ -17,6 +17,7 @@ package account
 
 import (
 	"github.com/rantuttl/cloudops/apiserver/pkg/api"
+	"github.com/rantuttl/cloudops/apiserver/pkg/apigroups/core"
 	"github.com/rantuttl/cloudops/apiserver/pkg/storage/names"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	"github.com/rantuttl/cloudops/apiserver/pkg/api/validation"
@@ -42,14 +43,14 @@ func (accountStrategy) NamespaceScoped() bool {
 }
 
 func (accountStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
-	account := obj.(*api.Account)
-	account.Status = api.AccountStatus{
-		Phase: api.AccountActive,
+	account := obj.(*core.Account)
+	account.Status = core.AccountStatus{
+		Phase: core.AccountActive,
 	}
 }
 
 func (accountStrategy) Validate(ctx genericapirequest.Context, obj runtime.Object) field.ErrorList {
-	account := obj.(*api.Account)
+	account := obj.(*core.Account)
 	return validation.ValidateAccount(account)
 }
 

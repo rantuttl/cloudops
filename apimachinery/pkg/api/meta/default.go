@@ -33,6 +33,7 @@ func NewDefaultRESTMapperFromScheme(defaultGroupVersions []schema.GroupVersion, 
 	for _, gv := range defaultGroupVersions {
 		for kind, oType := range scheme.KnownTypes(gv) {
 			gvk := gv.WithKind(kind)
+			// Check the Type's packaging path against expect ImportPrefix from GromMeta
 			if !strings.Contains(oType.PkgPath(), importPathPrefix) || ignoredKinds.Has(kind) {
 				continue
 			}

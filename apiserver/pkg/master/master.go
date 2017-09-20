@@ -51,10 +51,10 @@ func (c *Config) SkipComplete() completedConfig {
 	return completedConfig{c}
 }
 
-func (c completedConfig) New() (*Master, error) {
+func (c completedConfig) New(delegate genericapiserver.DelegationTarget) (*Master, error) {
 
 	glog.Info("Starting API Server")
-	s, err := c.Config.GenericConfig.SkipComplete().New("apiserver") // completion is done in Complete, no need for a second time
+	s, err := c.Config.GenericConfig.SkipComplete().New("apiserver", delegate) // completion is done in Complete, no need for a second time
 	if err != nil {
 		return nil, err
 	}

@@ -67,7 +67,6 @@ var NamespaceSubResourcesForTest = sets.NewString(namespaceSubresources.List()..
 
 type RequestInfoFactory struct {
 	APIPrefixes          sets.String // without leading and trailing slashes
-	GrouplessAPIPrefixes sets.String // without leading and trailing slashes
 }
 
 // TODO write an integration test against the swagger doc to test the RequestInfo and match up behavior to responses
@@ -119,17 +118,6 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 	}
 	requestInfo.APIPrefix = currentParts[0]
 	currentParts = currentParts[1:]
-
-	if !r.GrouplessAPIPrefixes.Has(requestInfo.APIPrefix) {
-		// one part (APIPrefix) has already been consumed, so this is actually "do we have four parts?"
-		if len(currentParts) < 3 {
-			// return a non-resource request
-			return &requestInfo, nil
-		}
-
-		requestInfo.APIGroup = currentParts[0]
-		currentParts = currentParts[1:]
-	}
 
 	requestInfo.IsResourceRequest = true
 	requestInfo.APIVersion = currentParts[0]
