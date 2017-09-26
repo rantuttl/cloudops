@@ -31,6 +31,7 @@ import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 	metav1 "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/api/meta"
+	"github.com/rantuttl/cloudops/apimachinery/pkg/conversion"
 	"github.com/rantuttl/cloudops/apiserver/pkg/registry/rest"
 	"github.com/rantuttl/cloudops/apiserver/pkg/endpoints/handlers"
 	"github.com/rantuttl/cloudops/apiserver/pkg/endpoints/handlers/negotiation"
@@ -135,6 +136,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 	lister, isLister := storage.(rest.Lister)
 	getter, isGetter := storage.(rest.Getter)
 	deleter, isDeleter := storage.(rest.Deleter)
+	gracefulDeleter, isGracefulDeleter := storage.(rest.GracefulDeleter)
 	watcher, _ := storage.(rest.Watcher)
 	storageMeta, isMetadata := storage.(rest.StorageMetadata)
 	if !isMetadata {
@@ -145,10 +147,20 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 		exporter = nil
 	}
 
-	// FIXME (rantuttl): For now, we only implement basic deleter. Stub code until we support a
-	// REST GracefulDeleter interface
-	isGracefulDeleter := false
-	gracefulDeleter := rest.GracefulDeleteAdapter{Deleter: deleter}
+	var versionedDeleteOptions runtime.Object
+	var versionedDeleterObject interface{}
+	switch {
+	case isGracefulDeleter:
+		versionedDeleteOptions, err = a.group.Creater.New(optionsExternalVersion.WithKind("DeleteOptions"))
+		if err != nil {
+			return nil, err
+		}
+		versionedDeleterObject = indirectArbitraryPointer(versionedDeleteOptions)
+		isDeleter = true
+	case isDeleter:
+		gracefulDeleter = rest.GracefulDeleteAdapter{Deleter: deleter}
+	}
+
 	versionedStatusPtr, err := a.group.Creater.New(optionsExternalVersion.WithKind("Status"))
 	if err != nil {
 		return nil, err
@@ -229,13 +241,15 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 
 	// Create the routes for the actions discovered
 
-	// A request scope object for handling requests on this resource type
+	// A request scope object for handling requests on this resource type within this API group
 	reqScope := handlers.RequestScope{
 		ContextFunc:		ctxFn,
 		Serializer:		a.group.Serializer,
 		Creater:		a.group.Creater,
+		Copier:			a.group.Copier, // used in update, i.e., PUT
+		Convertor:		a.group.Convertor, // used in list
 		Typer:			a.group.Typer,
-
+		Defaulter:		a.group.Defaulter, // set the defaults on the API resource
 		Resource:		a.group.GroupVersion.WithResource(resource),
 		Subresource:		subresource,
 		Kind:			fqKindToRegister,
@@ -298,6 +312,12 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 				Produces(append(storageMeta.ProducesMIMETypes(action.Verb), mediaTypes...)...).
 				Writes(versionedStatus).
 				Returns(http.StatusOK, "OK", versionedStatus)
+			if isGracefulDeleter {
+				route.Reads(versionedDeleterObject)
+				if err := addObjectParams(ws, route, versionedDeleteOptions); err != nil {
+					return nil, err
+				}
+			}
 			addParams(route, action.Params)
 			routes = append(routes, route)
 		case "POST": // Create a resource
@@ -319,8 +339,6 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			routes = append(routes, route)
 		case "LIST":
 			var handler restful.RouteFunction
-
-			handler = restfulDeleteResource(gracefulDeleter, isGracefulDeleter, reqScope)
 
 			// FIXME (rantuttl): Fix up for watcher later, especially docs and subresources.
 			handler = restfulListResource(lister, watcher, reqScope, false, a.minRequestTimeout)
@@ -427,6 +445,88 @@ func indirectArbitraryPointer(ptrToObject interface{}) interface{} {
 	return reflect.Indirect(reflect.ValueOf(ptrToObject)).Interface()
 }
 
+// FIXME (rantuttl): Nothing uses this yet. Just a hijacked idea
+// An interface to see if an object supports swagger documentation as a method
+type documentable interface {
+	SwaggerDoc() map[string]string
+}
+
+// addObjectParams converts a runtime.Object into a set of go-restful Param() definitions on the route.
+// The object must be a pointer to a struct; only fields at the top level of the struct that are not
+// themselves interfaces or structs are used; only fields with a json tag that is non empty (the standard
+// Go JSON behavior for omitting a field) become query parameters. The name of the query parameter is
+// the JSON field name. If a description struct tag is set on the field, that description is used on the
+// query parameter. In essence, it converts a standard JSON top level object into a query param schema.
+func addObjectParams(ws *restful.WebService, route *restful.RouteBuilder, obj interface{}) error {
+	sv, err := conversion.EnforcePtr(obj)
+	if err != nil {
+		return err
+	}
+	st := sv.Type()
+	switch st.Kind() {
+	case reflect.Struct:
+		for i := 0; i < st.NumField(); i++ {
+			name := st.Field(i).Name
+			sf, ok := st.FieldByName(name)
+			if !ok {
+				continue
+			}
+			switch sf.Type.Kind() {
+			case reflect.Interface, reflect.Struct:
+			case reflect.Ptr:
+				// TODO: This is a hack to let metav1.Time through. This needs to be fixed in a more generic way eventually. bug #36191
+				if (sf.Type.Elem().Kind() == reflect.Interface || sf.Type.Elem().Kind() == reflect.Struct) && strings.TrimPrefix(sf.Type.String(), "*") != "metav1.Time" {
+					continue
+				}
+				fallthrough
+			default:
+				jsonTag := sf.Tag.Get("json")
+				if len(jsonTag) == 0 {
+					continue
+				}
+				jsonName := strings.SplitN(jsonTag, ",", 2)[0]
+				if len(jsonName) == 0 {
+					continue
+				}
+
+				var desc string
+				if docable, ok := obj.(documentable); ok {
+					desc = docable.SwaggerDoc()[jsonName]
+				}
+				route.Param(ws.QueryParameter(jsonName, desc).DataType(typeToJSON(sf.Type.String())))
+			}
+		}
+	}
+	return nil
+}
+
+// Convert the name of a golang type to the name of a JSON type
+func typeToJSON(typeName string) string {
+	switch typeName {
+	case "bool", "*bool":
+		return "boolean"
+	case "uint8", "*uint8", "int", "*int", "int32", "*int32", "int64", "*int64", "uint32", "*uint32", "uint64", "*uint64":
+		return "integer"
+	case "float64", "*float64", "float32", "*float32":
+		return "number"
+	case "metav1.Time", "*metav1.Time":
+		return "string"
+	case "byte", "*byte":
+		return "string"
+	case "v1.DeletionPropagation", "*v1.DeletionPropagation":
+		return "string"
+
+	// TODO: Fix these when go-restful supports a way to specify an array query param:
+	// https://github.com/emicklei/go-restful/issues/225
+	case "[]string", "[]*string":
+		return "string"
+	case "[]int32", "[]*int32":
+		return "integer"
+
+	default:
+		return typeName
+	}
+}
 
 // TODO (rantuttl): add admission control capabilities
 // FIXME (rantuttl): 'Typer' already sent in scope object. Remove from this and associated method signatures

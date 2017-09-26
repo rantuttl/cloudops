@@ -38,6 +38,9 @@ type APIGroupVersion struct {
 	Serializer	runtime.NegotiatedSerializer
 	Typer		runtime.ObjectTyper
 	Creater		runtime.ObjectCreater
+	Copier		runtime.ObjectCopier // performs deepcopies per API Group type
+	Convertor	runtime.ObjectConvertor
+	Defaulter	runtime.ObjectDefaulter // for setting our defaults per API Group type
 	Linker		runtime.SelfLinker
 	Context		apirequest.RequestContextMapper
 

@@ -16,9 +16,18 @@
 package v1
 
 import (
+	"github.com/golang/glog"
+	v1core "github.com/rantuttl/cloudops/apiserver/pkg/api/core/v1"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 )
 
 func addDefaultingFuncs(scheme *runtime.Scheme) error {
-	return nil
+	return RegisterDefaults(scheme)
+}
+
+func SetDefaults_AccountStatus(obj *v1core.AccountStatus) {
+	glog.Info("Setting default account status")
+	if obj.Phase == "" {
+		obj.Phase = v1core.AccountActive
+	}
 }

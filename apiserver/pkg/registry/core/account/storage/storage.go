@@ -16,6 +16,8 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/rantuttl/cloudops/apiserver/pkg/apigroups/core"
 	"github.com/rantuttl/cloudops/apiserver/pkg/registry/core/account"
 	"github.com/rantuttl/cloudops/apiserver/pkg/registry/generic"
@@ -23,6 +25,7 @@ import (
 	genericregistry "github.com/rantuttl/cloudops/apiserver/pkg/registry/generic/registry"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	metav1 "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
+	apierrors "github.com/rantuttl/cloudops/apimachinery/pkg/api/errors"
 )
 
 type REST struct {
@@ -38,6 +41,7 @@ func NewREST(optsGetter generic.RESTOptionsGetter) *REST {
 		CreateStrategy:		account.Strategy,
 		UpdateStrategy:		account.Strategy,
 		DeleteStrategy:		account.Strategy,
+		ReturnDeletedObject:	true,
 	}
 	// FIXME (rantuttl)
 	//options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: account.GetAttrs}
@@ -64,4 +68,34 @@ func (r *REST) Create(ctx genericapirequest.Context, obj runtime.Object, include
 
 func (r *REST) Get(ctx genericapirequest.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return r.store.Get(ctx, name, options)
+}
+
+func (r *REST) Delete(ctx genericapirequest.Context, name string, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	obj, err := r.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+
+	account := obj.(*core.Account)
+
+	// make sure we have the object's UID
+	if options == nil {
+		options = metav1.NewDeleteOptions(0)
+	}
+
+	if options.Preconditions == nil {
+		options.Preconditions = &metav1.Preconditions{}
+	}
+
+	if options.Preconditions.UID == nil {
+		options.Preconditions.UID = &account.UID
+	} else if *options.Preconditions.UID != account.UID {
+		apierrors.NewConflict(
+			core.Resource("accounts"),
+			name,
+			fmt.Errorf("Precondition failed: UID in precondition: %v, UID in object meta: %v", *options.Preconditions.UID, account.UID),
+		)
+	}
+
+	return r.store.Delete(ctx, name, options)
 }

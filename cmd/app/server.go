@@ -55,11 +55,6 @@ func CreateServerChain(runOptions *options.ServerRunOptions, stopCh <-chan struc
 	}
 	//apiServer.GenericAPIServer.PrepareRun()
 
-	// FIXME (rantuttl): make compiler happy until we do something with this
-	_ = &insecureServingOptions
-	// Force return a failure
-	//err = errors.New("CreateServerChain early termination")
-	//s := &genericapiserver.GenericAPIServer{}
 	s := apiServer.GenericAPIServer
 
 	// TODO (rantuttl): check insecure serving here

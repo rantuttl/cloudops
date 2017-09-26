@@ -13,7 +13,7 @@
    under the License.
 */
 
-package core
+package v1
 
 import (
 	v1meta "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
@@ -31,10 +31,10 @@ const (
 )
 
 type Account struct {
-	v1meta.TypeMeta
-	v1meta.ObjectMeta
-	Spec AccountSpec
-	Status AccountStatus
+	v1meta.TypeMeta `json:",inline"`
+	v1meta.ObjectMeta `json:"metadata,omitempty"`
+	Spec AccountSpec `json:"spec,omitempty"`
+	Status AccountStatus `json:"status,omitempty"`
 }
 
 type AccountSpec struct {
@@ -46,28 +46,28 @@ type AccountSpec struct {
 }
 
 type AccountList struct {
-	v1meta.TypeMeta
-	v1meta.ListMeta
-	Items []Account
+	v1meta.TypeMeta `json:",inline"`
+	v1meta.ListMeta `json:"metadata,omitempty"`
+	Items []Account `json:"items"`
 }
 
 // TODO (rantuttl): Add other "core" group types below
 type User struct {
-	v1meta.TypeMeta
-	v1meta.ObjectMeta
-	Spec UserSpec
+	v1meta.TypeMeta `json:",inline"`
+	v1meta.ObjectMeta `json:"metadata,omitempty"`
+	Spec UserSpec `json:"spec,omitempty"`
 }
 
 type UserSpec struct {
 	// TODO (rantuttl): add additional info as needed about user specifics
 	// First/Last name, username, email, password(salt:sha256-hash), account
-	FirstName string
-	LastName string
-	Username string
+	FirstName string `json:"firstname,omitempty"`
+	LastName string `json:"lastname,omitempty"`
+	Username string `json:"username"`
 }
 
 type UserList struct {
-	v1meta.TypeMeta
-	v1meta.ListMeta
-	Items []User
+	v1meta.TypeMeta `json:",inline"`
+	v1meta.ListMeta `json:"metadata,omitempty"`
+	Items []User `json:"items"`
 }

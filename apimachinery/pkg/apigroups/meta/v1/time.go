@@ -13,7 +13,7 @@
    under the License.
 */
 
-package types
+package v1
 
 import (
 	"time"
@@ -22,6 +22,10 @@ import (
 
 type Time struct {
 	time.Time `json:"-"`
+}
+
+func (t Time) DeepCopy() Time {
+	return t
 }
 
 // String returns the representation of the time.

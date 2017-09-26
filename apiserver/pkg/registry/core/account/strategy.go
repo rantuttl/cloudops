@@ -47,15 +47,16 @@ func (accountStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runti
 	account.Status = core.AccountStatus{
 		Phase: core.AccountActive,
 	}
+	account.Generation = 1
 }
 
 func (accountStrategy) Validate(ctx genericapirequest.Context, obj runtime.Object) field.ErrorList {
 	account := obj.(*core.Account)
+	// TODO (rantuttl): should we be checking for owner information?
 	return validation.ValidateAccount(account)
 }
 
-func (accountStrategy) Canonicalize(obj runtime.Object) {
-}
+func (accountStrategy) Canonicalize(obj runtime.Object) {}
 
 // TODO (rantuttl): Place Update strategy functions here...
 

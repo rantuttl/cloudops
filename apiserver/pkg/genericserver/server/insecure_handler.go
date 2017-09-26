@@ -16,20 +16,14 @@
 package server
 
 import (
-	//"net"
 	"net/http"
 
 	"github.com/golang/glog"
 
 	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/user"
 	genericapifilters "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/filters"
+	genericfilters "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server/filters"
 	apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
-	// FIXME (rantuttl): Remove if not needed
-	//"k8s.io/apiserver/pkg/features"
-	//genericfilters "github.com/rantuttl/apiserver/apiserver/pkg/server/filters"
-	// FIXME (rantuttl): Remove if not needed
-	//utilfeature "k8s.io/apiserver/pkg/util/feature"
-	//"github.com/rantuttl/apiserver/client-go/rest"
 )
 
 // InsecureServingInfo is required to serve http.  HTTP does NOT include authentication or authorization.
@@ -38,7 +32,7 @@ import (
 
 func BuildInsecureHandlerChain(apiHandler http.Handler, c *Config) http.Handler {
 	handler := apiHandler
-	// FIXME (rantuttl): Remove if not needed
+	// FIXME (rantuttl)
 	/*
 	if utilfeature.DefaultFeatureGate.Enabled(features.AdvancedAuditing) {
 		handler = genericapifilters.WithAudit(handler, c.RequestContextMapper, c.AuditBackend, c.AuditPolicyChecker, c.LongRunningFunc)
@@ -48,12 +42,11 @@ func BuildInsecureHandlerChain(apiHandler http.Handler, c *Config) http.Handler 
 	*/
 	//handler = genericapifilters.WithAuthentication(handler, c.RequestContextMapper, insecureSuperuser{}, nil)
 	//handler = genericfilters.WithCORS(handler, c.CorsAllowedOriginList, nil, nil, nil, "true")
-	//handler = genericfilters.WithPanicRecovery(handler)
+	handler = genericfilters.WithPanicRecovery(handler)
 	//handler = genericfilters.WithTimeoutForNonLongRunningRequests(handler, c.RequestContextMapper, c.LongRunningFunc)
 	//handler = genericfilters.WithMaxInFlightLimit(handler, c.MaxRequestsInFlight, c.MaxMutatingRequestsInFlight, c.RequestContextMapper, c.LongRunningFunc)
 	handler = genericapifilters.WithRequestInfo(handler, NewRequestInfoResolver(c), c.RequestContextMapper)
 	handler = apirequest.WithRequestContext(handler, c.RequestContextMapper)
-
 	return handler
 }
 

@@ -17,6 +17,7 @@ package versioning
 
 import (
 	"io"
+	"github.com/golang/glog"
 
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
@@ -93,35 +94,48 @@ type codec struct {
 // successful, the returned runtime.Object will be the value passed as into. Note that this may bypass conversion if you pass an
 // into that matches the serialized version.
 func (c *codec) Decode(data []byte, defaultGVK *schema.GroupVersionKind, into runtime.Object) (runtime.Object, *schema.GroupVersionKind, error) {
+	glog.Info("Stage: 0 Decode")
 	versioned, isVersioned := into.(*runtime.VersionedObjects)
 	if isVersioned {
 		into = versioned.Last()
 	}
 
+	glog.Info("Decode Stage A")
 	obj, gvk, err := c.decoder.Decode(data, defaultGVK, into)
+	glog.Infof("Decode Stage A: obj: %v, gvk: %v, into: %v", obj, gvk, into)
 	if err != nil {
 		return nil, gvk, err
 	}
 
+	glog.Info("Decode Stage B")
 	if d, ok := obj.(runtime.NestedObjectDecoder); ok {
+		glog.Info("Decode Stage B1")
 		if err := d.DecodeNestedObjects(DirectDecoder{c.decoder}); err != nil {
 			return nil, gvk, err
 		}
 	}
 
+	glog.Info("Decode Stage C")
 	// if we specify a target, use generic conversion.
 	if into != nil {
+		glog.Info("Decode Stage C1")
 		if into == obj {
+			// API input decoded directly to our registered type
+			glog.Info("Decode Stage C1a")
 			if isVersioned {
 				return versioned, gvk, nil
 			}
+			glog.Info("Decode Stage C1b")
 			return into, gvk, nil
 		}
 
+		glog.Info("Decode Stage C2")
+		// API input did not decoded directly to our registered type, so
 		// perform defaulting if requested
 		if c.defaulter != nil {
 			// create a copy to ensure defaulting is not applied to the original versioned objects
 			if isVersioned {
+				glog.Info("Decode Stage C2a")
 				copied, err := c.copier.Copy(obj)
 				if err != nil {
 					utilruntime.HandleError(err)
@@ -129,6 +143,7 @@ func (c *codec) Decode(data []byte, defaultGVK *schema.GroupVersionKind, into ru
 				}
 				versioned.Objects = []runtime.Object{copied}
 			}
+			glog.Info("Decode Stage C2b")
 			c.defaulter.Default(obj)
 		} else {
 			if isVersioned {
@@ -136,17 +151,21 @@ func (c *codec) Decode(data []byte, defaultGVK *schema.GroupVersionKind, into ru
 			}
 		}
 
+		glog.Info("Decode Stage C3")
 		if err := c.convertor.Convert(obj, into, c.decodeVersion); err != nil {
 			return nil, gvk, err
 		}
 
+		glog.Info("Decode Stage C4")
 		if isVersioned {
 			versioned.Objects = append(versioned.Objects, into)
 			return versioned, gvk, nil
 		}
+		glog.Infof("Decode Stage C5: gvk: %v, into: %v", gvk, into)
 		return into, gvk, nil
 	}
 
+	glog.Info("Decode Stage D")
 	// Convert if needed.
 	if isVersioned {
 		// create a copy, because ConvertToVersion does not guarantee non-mutation of objects
@@ -158,8 +177,10 @@ func (c *codec) Decode(data []byte, defaultGVK *schema.GroupVersionKind, into ru
 		versioned.Objects = []runtime.Object{copied}
 	}
 
+	glog.Info("Decode Stage E")
 	// perform defaulting if requested
 	if c.defaulter != nil {
+		glog.Info("Stage: 2 Defaults")
 		c.defaulter.Default(obj)
 	}
 
@@ -167,12 +188,14 @@ func (c *codec) Decode(data []byte, defaultGVK *schema.GroupVersionKind, into ru
 	if err != nil {
 		return nil, gvk, err
 	}
+	glog.Info("Decode Stage F")
 	if isVersioned {
 		if versioned.Last() != out {
 			versioned.Objects = append(versioned.Objects, out)
 		}
 		return versioned, gvk, nil
 	}
+	glog.Info("Decode Stage G")
 	return out, gvk, nil
 }
 

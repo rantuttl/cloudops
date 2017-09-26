@@ -44,10 +44,10 @@ type Object interface {
 	SetGeneration(generation int64)
 	GetSelfLink() string
 	SetSelfLink(selfLink string)
-	GetCreationTimestamp() types.Time
-	SetCreationTimestamp(timestamp types.Time)
-	GetDeletionTimestamp() *types.Time
-	SetDeletionTimestamp(timestamp *types.Time)
+	GetCreationTimestamp() Time
+	SetCreationTimestamp(timestamp Time)
+	GetDeletionTimestamp() *Time
+	SetDeletionTimestamp(timestamp *Time)
 	GetDeletionGracePeriodSeconds() *int64
 	SetDeletionGracePeriodSeconds(*int64)
 	GetLabels() map[string]string
@@ -127,12 +127,12 @@ func (meta *ObjectMeta) GetGeneration() int64                { return meta.Gener
 func (meta *ObjectMeta) SetGeneration(generation int64)      { meta.Generation = generation }
 func (meta *ObjectMeta) GetSelfLink() string                 { return meta.SelfLink }
 func (meta *ObjectMeta) SetSelfLink(selfLink string)         { meta.SelfLink = selfLink }
-func (meta *ObjectMeta) GetCreationTimestamp() types.Time          { return meta.CreationTimestamp }
-func (meta *ObjectMeta) SetCreationTimestamp(creationTimestamp types.Time) {
+func (meta *ObjectMeta) GetCreationTimestamp() Time          { return meta.CreationTimestamp }
+func (meta *ObjectMeta) SetCreationTimestamp(creationTimestamp Time) {
 	meta.CreationTimestamp = creationTimestamp
 }
-func (meta *ObjectMeta) GetDeletionTimestamp() *types.Time { return meta.DeletionTimestamp }
-func (meta *ObjectMeta) SetDeletionTimestamp(deletionTimestamp *types.Time) {
+func (meta *ObjectMeta) GetDeletionTimestamp() *Time { return meta.DeletionTimestamp }
+func (meta *ObjectMeta) SetDeletionTimestamp(deletionTimestamp *Time) {
 	meta.DeletionTimestamp = deletionTimestamp
 }
 func (meta *ObjectMeta) GetDeletionGracePeriodSeconds() *int64 { return meta.DeletionGracePeriodSeconds }

@@ -22,7 +22,7 @@ import (
 	//"net/url"
 	"io/ioutil"
 	"encoding/hex"
-	//"github.com/golang/glog"
+	"github.com/golang/glog"
 
 	"github.com/rantuttl/cloudops/apimachinery/pkg/api/errors"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
@@ -116,6 +116,7 @@ func createHandler(r rest.NamedCreater, scope RequestScope, typer runtime.Object
 		obj, gvk, err := decoder.Decode(body, &expectedGVK, original)
 		if err != nil {
 			// FIXME (rantuttl): 'Typer' already sent in scope object. Reference and pass through here.
+			glog.Info("Bombing...")
 			err = transformDecodeError(typer, err, original, gvk, body)
 			scope.err(err, w, req)
 			return
@@ -135,11 +136,13 @@ func createHandler(r rest.NamedCreater, scope RequestScope, typer runtime.Object
 		result, err := finishRequest(timeout, func() (runtime.Object, error) {
 			return r.Create(ctx, name, obj, includeUninitialized)
 		})
+		glog.Info("Returned from Create")
 		if err != nil {
 			scope.err(err, w, req)
 			return
 		}
 
+		glog.Info("Create Done")
 		requestInfo, ok := request.RequestInfoFrom(ctx)
 		if !ok {
 			err := fmt.Errorf("missing requestInfo")
@@ -155,6 +158,7 @@ func createHandler(r rest.NamedCreater, scope RequestScope, typer runtime.Object
 		code := http.StatusCreated
 
 		transformResponseObject(ctx, scope, req, w, code, result)
+		glog.Info("Done")
 	}
 }
 
@@ -250,6 +254,89 @@ func ListResource(r rest.Lister, rw rest.Watcher, scope RequestScope, forceWatch
 // DeleteResource returns a function that will handle a resource deletion
 func DeleteResource(r rest.GracefulDeleter, allowsOptions bool, scope RequestScope) http.HandlerFunc {
         return func(w http.ResponseWriter, req *http.Request) {
+		// TODO (rantuttl): Decide how we want to handle establishing timeout values. For now, hardcode,
+		// but could provide via the API installation, either through the group registration and/or via a default setting.
+		timeout := 30 * time.Second
+
+		namespace, name, err := scope.Namer.Name(req)
+		if err != nil {
+			scope.err(err, w, req)
+		}
+		ctx := scope.ContextFunc(req)
+		ctx = request.WithNamespace(ctx, namespace)
+
+		options := &metav1.DeleteOptions{}
+		/*/ Graceful deletion support
+		if allowsOptions {
+			body, err := readBody(req)
+			if err != nil {
+				scope.err(err, w, req)
+				return
+			}
+			if len(body) > 0 {
+				s, err := negotiation.NegotiateInputSerializer(req, metainternalversion.Codecs)
+				if err != nil {
+					scope.err(err, w, req)
+					return
+				}
+				defaultGVK := scope.MetaGroupVersion.WithKind("DeleteOptions")
+				obj, _, err := metainternalversion.Codecs.DecoderToVersion(s.Serializer, defaultGVK.GroupVersion()).Decode(body, &defaultGVK, options)
+				if err != nil {
+					scope.err(err, w, req)
+					return
+				}
+				// Safety check
+				if obj != options {
+					scope.err(fmt.Errorf("decoded object cannot be converted to DeleteOptions"), w, req)
+					return
+				}
+			} else {
+				if values := req.URL.Query(); len(values) > 0 {
+					if err := metainternalversion.ParameterCodec.DecodeParameters(values, scope.MetaGroupVersion, options); err != nil {
+						err = errors.NewBadRequest(err.Error())
+						scope.err(err, w, req)
+						return
+					}
+				}
+			}
+		}*/
+
+		// delete the object now
+		result, err := finishRequest(timeout, func() (runtime.Object, error) {
+			obj, _, err := r.Delete(ctx, name, options)
+			return obj, err
+		})
+		if err != nil {
+			scope.err(err, w, req)
+			return
+		}
+
+		status := http.StatusOK
+		if result == nil { // means finishRequest found StatusSuccess in the returned status object
+			result = &metav1.Status{
+				Status: metav1.StatusSuccess,
+				Code:   int32(status),
+				Details: &metav1.StatusDetails{
+					Name: name,
+					Kind: scope.Kind.Kind,
+				},
+			}
+		} else { //finishRequest found status != StatusSuccess
+			// when a non-status response is returned, set the self link
+			requestInfo, ok := request.RequestInfoFrom(ctx)
+			if !ok {
+				scope.err(fmt.Errorf("missing requestInfo"), w, req)
+				return
+			}
+			if _, ok := result.(*metav1.Status); !ok {
+				if err := setSelfLink(result, requestInfo, scope.Namer); err != nil {
+					scope.err(err, w, req)
+					return
+				}
+			}
+		}
+
+		transformResponseObject(ctx, scope, req, w, status, result)
 	}
 }
 

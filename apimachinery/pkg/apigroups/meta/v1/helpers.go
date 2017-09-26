@@ -13,20 +13,12 @@
    under the License.
 */
 
-package factory
+package v1
 
-import (
-	"github.com/golang/glog"
-
-	"github.com/rantuttl/cloudops/apiserver/pkg/backend"
-	"github.com/rantuttl/cloudops/apiserver/pkg/backend/cal"
-)
-
-func newBackend(c backend.Config) backend.Interface {
-	// TODO (rantuttl): This is where we establish connection to the backend system using CAL client libraries
-	// create a client here and pass to NewCalBackend
-	glog.V(5).Infof("Establishing client connection to %v", c.ServerList)
-
-	// FIXME (rantuttl): Stub code for now
-	return cal.NewCalBackend()
+// NewDeleteOptions returns a DeleteOptions indicating the resource should
+// be deleted within the specified grace period. Use zero to indicate
+// immediate deletion. If you would prefer to use the default grace period,
+// use &metav1.DeleteOptions{} directly.
+func NewDeleteOptions(grace int64) *DeleteOptions {
+	return &DeleteOptions{GracePeriodSeconds: &grace}
 }

@@ -287,8 +287,8 @@ type genericAccessor struct {
 	kind	      *string
 	resourceVersion   *string
 	selfLink	  *string
-	creationTimestamp *types.Time
-	deletionTimestamp **types.Time
+	creationTimestamp *v1meta.Time
+	deletionTimestamp **v1meta.Time
 	labels	    *map[string]string
 	annotations       *map[string]string
 	// FIXME (rantuttl): do we need this???
@@ -384,19 +384,19 @@ func (a genericAccessor) SetSelfLink(selfLink string) {
 	*a.selfLink = selfLink
 }
 
-func (a genericAccessor) GetCreationTimestamp() types.Time {
+func (a genericAccessor) GetCreationTimestamp() v1meta.Time {
 	return *a.creationTimestamp
 }
 
-func (a genericAccessor) SetCreationTimestamp(timestamp types.Time) {
+func (a genericAccessor) SetCreationTimestamp(timestamp v1meta.Time) {
 	*a.creationTimestamp = timestamp
 }
 
-func (a genericAccessor) GetDeletionTimestamp() *types.Time {
+func (a genericAccessor) GetDeletionTimestamp() *v1meta.Time {
 	return *a.deletionTimestamp
 }
 
-func (a genericAccessor) SetDeletionTimestamp(timestamp *types.Time) {
+func (a genericAccessor) SetDeletionTimestamp(timestamp *v1meta.Time) {
 	*a.deletionTimestamp = timestamp
 }
 

@@ -13,20 +13,27 @@
    under the License.
 */
 
-package backend
+package v1
 
 import (
-	"golang.org/x/net/context"
-
-	metav1 "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
+	v1core "github.com/rantuttl/cloudops/apiserver/pkg/api/core/v1"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 )
 
-type Interface interface {
-	// Create adds a new object at a key unless it already exists.
-	Create(ctx context.Context, key string, obj, out runtime.Object, ttl uint64) error
+// Register each type's default settings
+func RegisterDefaults(scheme *runtime.Scheme) error {
+	scheme.AddTypeDefaultingFunc(&v1core.Account{}, func(obj interface{}) {SetObjectDefaults_Account(obj.(*v1core.Account)) })
+	scheme.AddTypeDefaultingFunc(&v1core.AccountList{}, func(obj interface{}) {SetObjectDefaults_AccountList(obj.(*v1core.AccountList)) })
+	return nil
+}
 
-	Get(ctx context.Context, key string, resourceVersion string, objPtr runtime.Object, ignoreNotFound bool) error
+func SetObjectDefaults_Account(in *v1core.Account) {
+	SetDefaults_AccountStatus(&in.Status)
+}
 
-	Delete(ctx context.Context, key string, out runtime.Object, preconditions *metav1.Preconditions) error
+func SetObjectDefaults_AccountList(in *v1core.AccountList) {
+	for i := range in.Items {
+		a := &in.Items[i]
+		SetObjectDefaults_Account(a)
+	}
 }

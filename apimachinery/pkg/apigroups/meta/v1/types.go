@@ -13,6 +13,8 @@
    under the License.
 */
 
+// TODO: For every type, may need a DeepCopy function. See ../../rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1/zz_generated.deepcopy.go
+
 package v1
 
 import (
@@ -81,12 +83,12 @@ type ObjectMeta struct {
 	// CreationTimestamp is a timestamp representing the server time when this object was
 	// created. It is not guaranteed to be set in happens-before order across separate operations.
 	// Clients may not set this value. It is represented in RFC3339 form and is in UTC.
-	CreationTimestamp types.Time `json:"creationTimestamp,omitempty"`
+	CreationTimestamp Time `json:"creationTimestamp,omitempty"`
 
 	// DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
 	// field is set by the server when a graceful deletion is requested by the user, and is not
 	// directly settable by a client.
-	DeletionTimestamp *types.Time `json:"deletionTimestamp,omitempty"`
+	DeletionTimestamp *Time `json:"deletionTimestamp,omitempty"`
 
 	// Number of seconds allowed for this object to gracefully terminate before
 	// it will be removed from the system. Only set when deletionTimestamp is also set.
@@ -480,14 +482,16 @@ type APIResource struct {
 	Namespaced bool `json:"namespaced"`
 	// kind is the kind for the resource (e.g. 'Foo' is the kind for a resource 'foo')
 	Kind string `json:"kind"`
-	// verbs is a list of supported kube verbs (this includes get, list, watch, create,
+	// verbs is a list of supported verbs (this includes get, list, watch, create,
 	// update, patch, delete, deletecollection, and proxy)
-	Verbs []string `json:"verbs"`
+	Verbs Verbs `json:"verbs"`
 	// shortNames is a list of suggested short names of the resource.
 	ShortNames []string `json:"shortNames,omitempty"`
 	// categories is a list of the grouped resources this resource belongs to (e.g. 'all')
 	Categories []string `json:"categories,omitempty"`
 }
+
+type Verbs []string
 
 // APIResourceList is a list of APIResource, it is used to expose the name of the
 // resources supported in a specific group and version, and if the resource

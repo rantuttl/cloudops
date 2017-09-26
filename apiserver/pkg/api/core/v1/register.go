@@ -34,15 +34,15 @@ var (
 // Adds the list of known types to api.Scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
         scheme.AddKnownTypes(SchemeGroupVersion,
-                &core.Account{},
-                &core.AccountList{},
-		// Add more types to group 'core' as needed. See also apiserver/pkg/apigroups/core/v1/types.go
+                &Account{},
+                &AccountList{},
+		// Add more types to group 'core' as needed. See also apiserver/pkg/apigroups/core/v1/types.go for internal versions
         )
 
 	// Add common types
 	scheme.AddKnownTypes(SchemeGroupVersion, &v1meta.Status{})
 
-	// Do some extra stuff for our scheme
+	// Do some extra registration for our scheme version
 	v1meta.AddToGroupVersion(scheme, SchemeGroupVersion)
         return nil
 }

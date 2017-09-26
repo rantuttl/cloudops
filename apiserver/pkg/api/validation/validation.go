@@ -41,8 +41,6 @@ func ValidateObjectMeta(meta *metav1.ObjectMeta, requiresNamespace bool, nameFn 
         allErrs := validation.ValidateObjectMeta(meta, requiresNamespace, apimachineryvalidation.ValidateNameFunc(nameFn), fldPath)
         // run additional checks for the finalizer name
 	// FIXME (rantuttl): Fix once we know if we need this or not
-        //for i := range meta.Finalizers {
-        //        allErrs = append(allErrs, validateKubeFinalizerName(string(meta.Finalizers[i]), fldPath.Child("finalizers").Index(i))...)
-        //}
+
         return allErrs
 }

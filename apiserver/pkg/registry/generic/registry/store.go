@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/glog"
+
 	"github.com/rantuttl/cloudops/apimachinery/pkg/api/meta"
 	metav1 "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/api/errors"
@@ -49,9 +51,9 @@ type Store struct {
 	QualifiedResource schema.GroupResource
 
         // Decorator is an optional exit hook on an object returned from the
-        // underlying storage (e.g., Get). The returned object could be an
+        // underlying backend (e.g., Get). The returned object could be an
 	// individual object or list type. Decorator is intended for
-        // integrations that are above storage and should only be used for
+        // integrations that are above the backend and should only be used for
         // specific cases where storage of the value is not appropriate
 	Decorator ObjectFunc
 
@@ -73,6 +75,8 @@ type Store struct {
 	// AfterDelete implements a further operation to run after a resource is
 	// deleted and before it is decorated, optional.
 	AfterDelete ObjectFunc
+
+	ReturnDeletedObject bool
 
 	// KeyRootFunc returns the root key for this resource; should not
 	// include trailing "/".  This is used for operations that work on the
@@ -298,6 +302,38 @@ func (e *Store) Get(ctx genericapirequest.Context, name string, options *metav1.
 	return obj, nil
 }
 
+func (e *Store) Delete(ctx genericapirequest.Context, name string, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	obj := e.NewFunc()
+	key, err := e.KeyFunc(ctx, name)
+	if err != nil {
+		return nil, false, err
+	}
+	if err := e.Backend.Get(ctx, key, "", obj, false); err != nil {
+		// TODO (rantuttl): Maybe some better error type determinations
+		return nil, false, err
+	}
+
+	var preconditions metav1.Preconditions
+	if options.Preconditions != nil {
+		preconditions.UID = options.Preconditions.UID
+	}
+
+	_, _, err = rest.BeforeDelete(e.DeleteStrategy, ctx, obj, options)
+	if err != nil {
+		return nil, false, err
+	}
+
+	glog.V(5).Infof("Deleting \"%s\" from backend.", name)
+	out := e.NewFunc()
+	if err := e.Backend.Delete(ctx, key, out, &preconditions); err != nil {
+		// TODO (rantuttl): Maybe some better error type determinations
+		return nil, false, err
+	}
+
+	out, err = e.finalizeDelete(out, true)
+	return out, true, err
+}
+
 // calculateTTL is a helper for retrieving the updated TTL for an object or
 // returning an error if the TTL cannot be calculated. The defaultTTL is
 // changed to 1 if less than zero. Zero means no TTL, not expire immediately.
@@ -312,4 +348,34 @@ func (e *Store) calculateTTL(obj runtime.Object, defaultTTL int64, update bool) 
 		ttl, err = e.TTLFunc(obj, ttl, update)
 	}
 	return ttl, err
+}
+
+func (e *Store) finalizeDelete(obj runtime.Object, runHooks bool) (runtime.Object, error) {
+	if runHooks && e.AfterDelete != nil {
+		if err := e.AfterDelete(obj); err != nil {
+			return nil, err
+		}
+	}
+	if e.ReturnDeletedObject {
+		if e.Decorator != nil {
+			if err := e.Decorator(obj); err != nil {
+				return nil, err
+			}
+		}
+		return obj, nil
+	}
+	// Return information about the deleted object, which enables clients to
+	// verify that the object was actually deleted
+	accessor, err := meta.Accessor(obj)
+	if err != nil {
+		return nil, err
+	}
+	details := &metav1.StatusDetails{
+		Name:  accessor.GetName(),
+		Group: e.QualifiedResource.Group,
+		Kind:  e.QualifiedResource.Resource, // Yes we set Kind field to resource.
+		UID:   accessor.GetUID(),
+	}
+	status := &metav1.Status{Status: metav1.StatusSuccess, Details: details}
+	return status, nil
 }

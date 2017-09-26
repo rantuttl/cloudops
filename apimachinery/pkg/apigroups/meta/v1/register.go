@@ -20,9 +20,31 @@ import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 )
 
+// WatchEventKind is name reserved for serializing watch events.
+const WatchEventKind = "WatchEvent"
+
 func AddToGroupVersion(scheme *runtime.Scheme, groupVersion schema.GroupVersion) {
 	// TODO (rantuttl): Handle watch events here in the future
-	// Stubbed for now...
-	// See ./staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/register.go
+	//scheme.AddKnownTypeWithName(groupVersion.WithKind(WatchEventKind), &WatchEvent{})
+	//scheme.AddKnownTypeWithName(
+	//	schema.GroupVersion{Group: groupVersion.Group, Version: runtime.APIVersionInternal}.WithKind(WatchEventKind),
+	//	// FIXME (rantuttl): Add InternalEvent to apimachinery/pkg/apigroups/meta/v1/types.go
+	//	&InternalEvent{},
+	//)
+
+	scheme.AddKnownTypes(groupVersion,
+		// FIXME (rantuttl): Add ListOptions to apimachinery/pkg/apigroups/meta/v1/types.go
+		//&ListOptions{},
+		// TODO (rantuttl): Consider moving 'Status" to here from the likes of /apiserver/pkg/api/core/v1/register.go
+		//&Status{},
+		&ExportOptions{},
+		&GetOptions{},
+		&DeleteOptions{},
+	)
+	// See ./staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/register.go for generic conversion functions
+	// FUTURE FIXME (rantuttl): Add watcher conversion funcs as needed.
+
+	scheme.AddGeneratedDeepCopyFuncs(GetGeneratedDeepCopyFuncs()...)
+	//AddConversionFuncs(scheme)
 
 }

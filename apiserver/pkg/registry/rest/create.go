@@ -18,12 +18,10 @@ package rest
 import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/api/errors"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
-	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/api/validation"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/util/validation/field"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/api/validation/path"
 	metav1 "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
-	"github.com/rantuttl/cloudops/apimachinery/pkg/api/meta"
 	"github.com/rantuttl/cloudops/apiserver/pkg/storage/names"
 	genericapirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
 )
@@ -86,6 +84,7 @@ func BeforeCreate(strategy RESTCreateStrategy, ctx genericapirequest.Context, ob
 	objectMeta.SetDeletionGracePeriodSeconds(nil)
 
 	strategy.PrepareForCreate(ctx, obj)
+	// Populate creation timestamp and UID fields of meta
 	FillObjectMetaSystemFields(ctx, objectMeta)
 	if len(objectMeta.GetGenerateName()) > 0 && len(objectMeta.GetName()) == 0 {
 		objectMeta.SetName(strategy.GenerateName(objectMeta.GetGenerateName()))
@@ -106,17 +105,4 @@ func BeforeCreate(strategy RESTCreateStrategy, ctx genericapirequest.Context, ob
 	strategy.Canonicalize(obj)
 
 	return nil
-}
-
-// objectMetaAndKind retrieves kind and ObjectMeta from a runtime object, or returns an error.
-func objectMetaAndKind(typer runtime.ObjectTyper, obj runtime.Object) (metav1.Object, schema.GroupVersionKind, error) {
-	objectMeta, err := meta.Accessor(obj)
-	if err != nil {
-		return nil, schema.GroupVersionKind{}, errors.NewInternalError(err)
-	}
-	kinds, _, err := typer.ObjectKinds(obj)
-	if err != nil {
-		return nil, schema.GroupVersionKind{}, errors.NewInternalError(err)
-	}
-	return objectMeta, kinds[0], nil
 }

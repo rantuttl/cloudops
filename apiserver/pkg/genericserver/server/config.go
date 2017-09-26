@@ -30,6 +30,7 @@ import (
 	"github.com/rantuttl/cloudops/apiserver/pkg/server/routes"
 	//genericapiserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
 	genericapifilters "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/filters"
+	genericfilters "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server/filters"
 	apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
 	certutil "github.com/rantuttl/cloudops/apiserver/pkg/util/cert"
 	genericregistry "github.com/rantuttl/cloudops/apiserver/pkg/registry/generic"
@@ -181,6 +182,7 @@ func DefaultHandlerChainBuilder(apiHandler http.Handler, c *Config) http.Handler
 	// NOTE that this looks very similar to BuildInsecureHandlerChain in apiserver/pkg/genericserver/server/insecure_handler.go
 	handler = genericapifilters.WithRequestInfo(handler, NewRequestInfoResolver(c), c.RequestContextMapper)
 	handler = apirequest.WithRequestContext(handler, c.RequestContextMapper)
+	handler = genericfilters.WithPanicRecovery(handler)
 	return handler
 }
 

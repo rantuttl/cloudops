@@ -21,6 +21,7 @@ import (
 
 	"github.com/rantuttl/cloudops/apiserver/pkg/backend"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
+	metav1 "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
 )
 
 func NewCalBackend() backend.Interface {
@@ -28,7 +29,10 @@ func NewCalBackend() backend.Interface {
 }
 
 type calHelper struct {
-	// TODO (rantuttl): Put things needed for CAL communication and other helper functions
+	// TODO (rantuttl): Put things needed for CAL communication and other helper functions that
+	// would be helpful, especially things about the CAL client and things unique to the API
+	// group that can be used for CAL communications. Codec libraries for encoding / decoding
+	// requests / responses to CAL; things for managing cache (if used)
 }
 
 func (h *calHelper) Create(ctx context.Context, key string, obj, out runtime.Object, ttl uint64) error {
@@ -45,6 +49,16 @@ func (h *calHelper) Get(ctx context.Context, key string, resourceVersion string,
 		glog.Errorf("Context is nil")
 	}
 	glog.Infof("Get key: %s", key)
+
+	return nil
+}
+
+func (h *calHelper) Delete(ctx context.Context, key string, out runtime.Object, preconditions *metav1.Preconditions) error {
+	if ctx == nil {
+		glog.Errorf("Context is nil")
+	}
+	glog.Infof("Delete key: %s", key)
+	// NOTE: preconditions.UID is the UID of the object
 
 	return nil
 }
