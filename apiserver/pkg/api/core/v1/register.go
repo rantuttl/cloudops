@@ -36,7 +36,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
         scheme.AddKnownTypes(SchemeGroupVersion,
                 &Account{},
                 &AccountList{},
-		// Add more types to group 'core' as needed. See also apiserver/pkg/apigroups/core/v1/types.go for internal versions
+		// Add more types to group 'core' as needed. See also apiserver/pkg/apigroups/core/types.go for internal versions
         )
 
 	// Add common types

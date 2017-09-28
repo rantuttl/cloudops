@@ -22,7 +22,6 @@ import (
 	//"net/url"
 	"io/ioutil"
 	"encoding/hex"
-	"github.com/golang/glog"
 
 	"github.com/rantuttl/cloudops/apimachinery/pkg/api/errors"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
@@ -116,7 +115,6 @@ func createHandler(r rest.NamedCreater, scope RequestScope, typer runtime.Object
 		obj, gvk, err := decoder.Decode(body, &expectedGVK, original)
 		if err != nil {
 			// FIXME (rantuttl): 'Typer' already sent in scope object. Reference and pass through here.
-			glog.Info("Bombing...")
 			err = transformDecodeError(typer, err, original, gvk, body)
 			scope.err(err, w, req)
 			return
@@ -136,13 +134,11 @@ func createHandler(r rest.NamedCreater, scope RequestScope, typer runtime.Object
 		result, err := finishRequest(timeout, func() (runtime.Object, error) {
 			return r.Create(ctx, name, obj, includeUninitialized)
 		})
-		glog.Info("Returned from Create")
 		if err != nil {
 			scope.err(err, w, req)
 			return
 		}
 
-		glog.Info("Create Done")
 		requestInfo, ok := request.RequestInfoFrom(ctx)
 		if !ok {
 			err := fmt.Errorf("missing requestInfo")
@@ -158,7 +154,6 @@ func createHandler(r rest.NamedCreater, scope RequestScope, typer runtime.Object
 		code := http.StatusCreated
 
 		transformResponseObject(ctx, scope, req, w, code, result)
-		glog.Info("Done")
 	}
 }
 

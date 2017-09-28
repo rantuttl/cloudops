@@ -20,5 +20,6 @@ import (
 )
 
 func addConversionFuncs(scheme *runtime.Scheme) error {
+	// TODO (rantuttl): Good place for label conversion functions. See ./pkg/api/v1/conversion.go
 	return nil
 }

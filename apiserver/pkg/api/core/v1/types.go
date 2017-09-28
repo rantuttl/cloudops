@@ -22,6 +22,7 @@ import (
 type AccountStatus struct {
 	Phase AccountPhase
 }
+
 type AccountPhase string
 
 const (

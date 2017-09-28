@@ -28,5 +28,5 @@ func newBackend(c backend.Config) backend.Interface {
 	glog.V(5).Infof("Establishing client connection to %v", c.ServerList)
 
 	// FIXME (rantuttl): Stub code for now
-	return cal.NewCalBackend()
+	return cal.NewCalBackend(c.Codec, c.Copier)
 }

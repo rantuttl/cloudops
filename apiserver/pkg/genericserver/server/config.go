@@ -29,6 +29,7 @@ import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/util/sets"
 	"github.com/rantuttl/cloudops/apiserver/pkg/server/routes"
 	//genericapiserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
+	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/authenticator"
 	genericapifilters "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/filters"
 	genericfilters "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server/filters"
 	apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
@@ -46,6 +47,7 @@ type Config struct {
 	// The default (api.Codecs) usually works fine.
 	Serializer runtime.NegotiatedSerializer
 	SecureServingInfo *SecureServingInfo
+	Authenticator authenticator.Request
 	CorsAllowedOriginList []string
 	BuildHandlerChainFunc func(apiHandler http.Handler, c *Config) (secure http.Handler)
 	EnableSwaggerUI bool
@@ -68,6 +70,10 @@ type Config struct {
 
 	// RESTOptionsGetter is used to construct RESTStorage types via the generic registry.
 	RESTOptionsGetter genericregistry.RESTOptionsGetter
+
+	// TODO (rantuttl): defaults to false, but could be set to true if something like a password file is presented
+	// via some command line options
+	SupportsBasicAuth bool
 }
 
 type SecureServingInfo struct {
@@ -133,6 +139,7 @@ func (c completedConfig) New(name string, delegate DelegationTarget) (*GenericAP
 		return c.BuildHandlerChainFunc(handler, c.Config)
 	}
 
+	// Create a new API hander with handler chain based on DefaultHandlerChainBuilder
 	apiServerHandler := NewAPIServerHandler(name, handlerChainBuilder, delegate.UnprotectedHandler())
 	s := &GenericAPIServer{
 		SecureServingInfo: c.SecureServingInfo,
@@ -176,7 +183,7 @@ func DefaultHandlerChainBuilder(apiHandler http.Handler, c *Config) http.Handler
 	handler := apiHandler
 	// FIXME (rantuttl): See ./staging/src/k8s.io/apiserver/pkg/server/config.go
 	//handler := genericapifilters.WithAuthorization(apiHandler, c.RequestContextMapper, c.Authorizer, c.Serializer)
-	//handler = genericapifilters.WithAuthentication(handler, c.RequestContextMapper, c.Authenticator, genericapifilters.Unauthorized(c.RequestContextMapper, c.Serializer, c.SupportsBasicAuth))
+	handler = genericapifilters.WithAuthentication(handler, c.RequestContextMapper, c.Authenticator, genericapifilters.Unauthorized(c.RequestContextMapper, c.Serializer, c.SupportsBasicAuth))
 	// etc...
 	// build up the chained handlers here (see filters)
 	// NOTE that this looks very similar to BuildInsecureHandlerChain in apiserver/pkg/genericserver/server/insecure_handler.go

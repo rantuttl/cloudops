@@ -22,6 +22,9 @@ import (
 	"github.com/rantuttl/cloudops/apiserver/pkg/api/core/v1"
 )
 
+// function that convert between external representations to internal representation and back again.
+// Internal representation are in apiserver/pkg/apigroups/<group>,
+// External representations are in apiserver/pkg/api/<group>
 func init() {
 	localSchemeBuilder.Register(RegisterConversions)
 }

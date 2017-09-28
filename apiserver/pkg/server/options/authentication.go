@@ -24,19 +24,24 @@ import (
 
 	genericserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
 	genericopts "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/options"
-	"github.com/rantuttl/cloudops/apiserver/pkg/server/authenticator"
+	"github.com/rantuttl/cloudops/apiserver/pkg/authentication"
 	authzmodes "github.com/rantuttl/cloudops/apiserver/pkg/server/authorizer/modes"
 )
 
 type BuiltInAuthenticationOptions struct {
 	// FIXME (rantuttl): Added support for Bearer Token in request header
 	Anonymous       *AnonymousAuthenticationOptions
+	PasswordFile	*PasswordFileAuthenticationOptions
 	ClientCert      *genericopts.ClientCertAuthenticationOptions
 	Keystone        *KeystoneAuthenticationOptions
 }
 
 type AnonymousAuthenticationOptions struct {
 	Allow bool
+}
+
+type PasswordFileAuthenticationOptions struct {
+	BasicAuthFile string
 }
 
 type KeystoneAuthenticationOptions struct {
@@ -51,12 +56,18 @@ func NewBuiltInAuthenticationOptions() *BuiltInAuthenticationOptions {
 func (s *BuiltInAuthenticationOptions) WithAll() *BuiltInAuthenticationOptions {
 	return s.
 		WithAnyonymous().
+		WithPasswordFile().
 		WithClientCert().
 		WithKeystone()
 }
 
 func (s *BuiltInAuthenticationOptions) WithAnyonymous() *BuiltInAuthenticationOptions {
 	s.Anonymous = &AnonymousAuthenticationOptions{Allow: true}
+	return s
+}
+
+func (s *BuiltInAuthenticationOptions) WithPasswordFile() *BuiltInAuthenticationOptions {
+	s.PasswordFile = &PasswordFileAuthenticationOptions{}
 	return s
 }
 
@@ -85,6 +96,12 @@ func (s *BuiltInAuthenticationOptions) AddFlags(fs *pflag.FlagSet) {
 			"Anonymous requests have a username of system:anonymous, and a group name of system:unauthenticated.")
 	}
 
+	if s.PasswordFile != nil {
+		fs.StringVar(&s.PasswordFile.BasicAuthFile, "basic-auth-file", s.PasswordFile.BasicAuthFile, ""+
+			"If set, the file that will be used to admit requests to the secure port of the API server "+
+			"via http basic authentication.")
+	}
+
 	if s.ClientCert != nil {
 		s.ClientCert.AddFlags(fs)
 	}
@@ -109,8 +126,8 @@ func (s *BuiltInAuthenticationOptions) AddDeprecatedFlags(fs *pflag.FlagSet) {
         //fs.MarkDeprecated("port", "see --insecure-port instead.")
 }
 
-func (s *BuiltInAuthenticationOptions) ToAuthenticationConfig() authenticator.AuthenticatorConfig {
-	ret := authenticator.AuthenticatorConfig{}
+func (s *BuiltInAuthenticationOptions) ToAuthenticationConfig() authentication.AuthenticatorConfig {
+	ret := authentication.AuthenticatorConfig{}
 
 	if s.Anonymous != nil {
 		ret.Anonymous = s.Anonymous.Allow
@@ -123,6 +140,10 @@ func (s *BuiltInAuthenticationOptions) ToAuthenticationConfig() authenticator.Au
 	if s.Keystone != nil {
 		ret.KeystoneURL = s.Keystone.URL
 		ret.KeystoneCAFile = s.Keystone.CAFile
+	}
+
+	if s.PasswordFile != nil {
+		ret.BasicAuthFile = s.PasswordFile.BasicAuthFile
 	}
 
 	return ret
@@ -140,6 +161,8 @@ func (o *BuiltInAuthenticationOptions) ApplyTo(c *genericserver.Config) error {
 			return fmt.Errorf("unable to load client CA file: %v", err)
 		}
 	}
+
+	c.SupportsBasicAuth = o.PasswordFile != nil && len(o.PasswordFile.BasicAuthFile) > 0
 
 	return nil
 }

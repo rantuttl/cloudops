@@ -125,6 +125,22 @@ func (s preparedGenericAPIServer) Run(stopCh <-chan struct{}) error {
 // NonBlockingRun spawns the secure http server. An error is
 // returned if the secure port cannot be listened on.
 func (s preparedGenericAPIServer) NonBlockingRun(stopCh <-chan struct{}) error {
+	// TODO (rantuttl): Setup secured API server utilizing handler chains defined in
+	// package server: apiserver/pkg/genericserver/server/config.go:DefaultHandlerChainBuilder
+	internalStopCh := make(chan struct{})
+
+	if s.SecureServingInfo != nil && s.Handler != nil {
+		if err := s.serveSecurely(internalStopCh); err != nil {
+			close(internalStopCh)
+			return err
+		}
+	}
+	go func() {
+		<-stopCh
+		close(internalStopCh)
+	}()
+
+	// TODO (rantuttl): If we ever need post-start hooks, this should be where we instantiate them
 	return nil
 }
 

@@ -19,11 +19,13 @@ import (
 	//"errors"
 
 	"github.com/golang/glog"
+	"github.com/go-openapi/spec"
 
 	"github.com/rantuttl/cloudops/cmd/app/options"
 	"github.com/rantuttl/cloudops/apiserver/pkg/util/version"
 	"github.com/rantuttl/cloudops/apiserver/pkg/master"
 	"github.com/rantuttl/cloudops/apiserver/pkg/api"
+	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/authenticator"
 	genericapiserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
 	utilerrors "github.com/rantuttl/cloudops/apimachinery/pkg/util/errors"
 	serverstorage "github.com/rantuttl/cloudops/apiserver/pkg/server/storage"
@@ -43,7 +45,6 @@ func Run(runOptions *options.ServerRunOptions, stopCh <-chan struct{}) error {
 }
 
 func CreateServerChain(runOptions *options.ServerRunOptions, stopCh <-chan struct{}) (*genericapiserver.GenericAPIServer, error) {
-	// TODO (rantuttl): This is a good place to establish a mechanism to talk to the instances of CAL
 
 	config, insecureServingOptions, err := CreateMasterAPIServerConfig(runOptions)
 	if err != nil {
@@ -57,7 +58,6 @@ func CreateServerChain(runOptions *options.ServerRunOptions, stopCh <-chan struc
 
 	s := apiServer.GenericAPIServer
 
-	// TODO (rantuttl): check insecure serving here
 	if insecureServingOptions != nil {
 		insecureHandlerChain := genericapiserver.BuildInsecureHandlerChain(s.UnprotectedHandler(), config.GenericConfig)
 		if err := genericapiserver.NonBlockingRun(insecureServingOptions, insecureHandlerChain, stopCh); err != nil {
@@ -128,6 +128,11 @@ func BuildGenericConfig(s *options.ServerRunOptions) (*genericapiserver.Config, 
 	if err := s.Authentication.ApplyTo(config); err != nil {
 		return nil, nil, err
 	}
+
+	config.Authenticator, _, err = BuildAuthenticator(s)
+
+	// TODO (rantuttl): Build Authorizor and implement Admission controls here
+
 	v := version.Get()
 	config.Version = &v
 
@@ -142,6 +147,12 @@ func defaultOptions(s *options.ServerRunOptions) error {
 	}
 
 	return nil
+}
+
+func BuildAuthenticator(s *options.ServerRunOptions) (authenticator.Request, *spec.SecurityDefinitions, error) {
+	// apply any server run options to an AuthenticationConfig, then return the Authenticator that implements Request interface
+	authenticatorConfig := s.Authentication.ToAuthenticationConfig()
+	return authenticatorConfig.New()
 }
 
 func BuildStorageFactory(s *options.ServerRunOptions) (*serverstorage.DefaultStorageFactory, error) {

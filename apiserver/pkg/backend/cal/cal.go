@@ -24,8 +24,11 @@ import (
 	metav1 "github.com/rantuttl/cloudops/apimachinery/pkg/apigroups/meta/v1"
 )
 
-func NewCalBackend() backend.Interface {
-	return &calHelper{}
+func NewCalBackend(codec runtime.Codec, copier runtime.ObjectCopier) backend.Interface {
+	return &calHelper{
+		codec:		codec,
+		copier:		copier,
+	}
 }
 
 type calHelper struct {
@@ -33,6 +36,9 @@ type calHelper struct {
 	// would be helpful, especially things about the CAL client and things unique to the API
 	// group that can be used for CAL communications. Codec libraries for encoding / decoding
 	// requests / responses to CAL; things for managing cache (if used)
+	//client whatevertype
+	codec runtime.Codec
+	copier runtime.ObjectCopier
 }
 
 func (h *calHelper) Create(ctx context.Context, key string, obj, out runtime.Object, ttl uint64) error {
@@ -40,6 +46,15 @@ func (h *calHelper) Create(ctx context.Context, key string, obj, out runtime.Obj
 		glog.Errorf("Context is nil")
 	}
 	glog.Infof("Create key: %s", key)
+	glog.Infof("Create obj: %v", obj)
+	glog.Infof("Create out: %v", out)
+	// 1. Encode object with calHelper known codecs
+	// 2. Transform object (if needed)
+	// 3. Set any TTL options for CAL request
+	// 4. TODO metrics for latency
+	// 5. If out != nil, copy response body back to out
+	//	5a. Transform object (if needed)
+	//	5b. Decode object with calHelper known codecs
 
 	return nil
 }

@@ -96,6 +96,7 @@ func (d director) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // ServeHTTP makes it an http.Handler
+// top-level entry point to the handler chain
 func (a *APIServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         a.FullHandlerChain.ServeHTTP(w, r)
 }
