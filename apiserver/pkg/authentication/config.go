@@ -37,6 +37,7 @@ type AuthenticatorConfig struct {
 	KeystoneCAFile			string
 }
 
+// creates a chain of authenticators
 func (c AuthenticatorConfig) New() (authenticator.Request, *spec.SecurityDefinitions, error) {
 	var authenticators  []authenticator.Request
 	securityDefinitions := spec.SecurityDefinitions{}
@@ -100,12 +101,15 @@ func (c AuthenticatorConfig) New() (authenticator.Request, *spec.SecurityDefinit
 		return nil, &securityDefinitions, nil
 	}
 
+	// this creates a wrapper that implements AuthenticateRequest, but loops through all authenticators
 	authenticator := union.New(authenticators...)
+	// implements AuthenticateRequest, and invokes the union's AuthenticateRequest method
 	authenticator = group.NewAuthenticatedGroupAdder(authenticator)
 
 	if c.Anonymous {
 		// If the authenticator chain returns an error, return an error (don't consider a bad bearer token
 		// or invalid username/password combination anonymous).
+		// implements AuthenticateRequest, and invokes the AuthenticatedGroupAdder's AuthenticateRequest
 		authenticator = union.NewFailOnError(authenticator, anonymous.NewAuthenticator())
 	}
 

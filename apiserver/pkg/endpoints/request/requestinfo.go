@@ -74,13 +74,10 @@ type RequestInfoFactory struct {
 // It handles both resource and non-resource requests and fills in all the pertinent information for each.
 // Valid Inputs:
 // Resource paths
-// /apis/{api-group}/{version}/namespaces
-// /api/{version}/namespaces
-// /api/{version}/namespaces/{namespace}
-// /api/{version}/namespaces/{namespace}/{resource}
-// /api/{version}/namespaces/{namespace}/{resource}/{resourceName}
-// /api/{version}/{resource}
-// /api/{version}/{resource}/{resourceName}
+// /api/{api-group}/{version}/namespaces
+// /api/{api-group}/{version}/namespaces/{namespace}
+// /api/{api-group}/{version}/namespaces/{namespace}/{resource}
+// /api/{api-group}/{version}/namespaces/{namespace}/{resource}/{resourceName}
 //
 // Special verbs without subresources:
 // /api/{version}/proxy/{resource}/{resourceName}
@@ -91,12 +88,9 @@ type RequestInfoFactory struct {
 // /api/{version}/watch/namespaces/{namespace}/{resource}
 //
 // NonResource paths
-// /apis/{api-group}/{version}
-// /apis/{api-group}
-// /apis
-// /api/{version}
+// /api/{api-group}/{version}
+// /api/{api-group}
 // /api
-// /healthz
 // /
 func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, error) {
 	// start with a non-resource request until proven otherwise
@@ -117,6 +111,14 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 		return &requestInfo, nil
 	}
 	requestInfo.APIPrefix = currentParts[0]
+	currentParts = currentParts[1:]
+
+	// one part (APIPrefix) has already been consumed, so this is actually "do we have four parts?"
+	if len(currentParts) < 3 {
+		// return a non-resource request
+		return &requestInfo, nil
+	}
+	requestInfo.APIGroup = currentParts[0]
 	currentParts = currentParts[1:]
 
 	requestInfo.IsResourceRequest = true
