@@ -36,6 +36,7 @@ type ServerRunOptions struct {
 	SecureServing           *genericopts.SecureServingOptions
 	InsecureServing         *genericopts.InsecureServingOptions
 	Authentication          *serveropts.BuiltInAuthenticationOptions
+	Authorization		*serveropts.BuiltInAuthorizationOptions
 
 	EnableLogsHandler         bool
 	EventTTL                  time.Duration
@@ -50,7 +51,7 @@ func NewServerRunOptions() *ServerRunOptions {
 		SecureServing: genericopts.NewSecureServingOptions(),
 		InsecureServing: genericopts.NewInsecureServingOptions(),
 		Authentication:  serveropts.NewBuiltInAuthenticationOptions().WithAll(),
-
+		Authorization:	serveropts.NewBuiltInAuthorizationOptions(),
 		EnableLogsHandler: true,
 		EventTTL:          1 * time.Hour,
 	}
@@ -68,6 +69,7 @@ func (s *ServerRunOptions) AddFlags(fs *pflag.FlagSet) {
 	s.InsecureServing.AddDeprecatedFlags(fs)
 	s.Authentication.AddFlags(fs)
 	s.Authentication.AddDeprecatedFlags(fs)
+	s.Authorization.AddFlags(fs)
 
 	// Note: the weird ""+ in below lines seems to be the only way to get gofmt to
 	// arrange these text blocks sensibly. Grrr.

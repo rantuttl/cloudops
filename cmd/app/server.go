@@ -16,6 +16,7 @@
 package app
 
 import (
+	"fmt"
 	//"errors"
 
 	"github.com/golang/glog"
@@ -26,6 +27,7 @@ import (
 	"github.com/rantuttl/cloudops/apiserver/pkg/master"
 	"github.com/rantuttl/cloudops/apiserver/pkg/api"
 	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/authenticator"
+	"github.com/rantuttl/cloudops/apiserver/pkg/authorization/authorizer"
 	genericapiserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
 	utilerrors "github.com/rantuttl/cloudops/apimachinery/pkg/util/errors"
 	serverstorage "github.com/rantuttl/cloudops/apiserver/pkg/server/storage"
@@ -130,8 +132,16 @@ func BuildGenericConfig(s *options.ServerRunOptions) (*genericapiserver.Config, 
 	}
 
 	config.Authenticator, _, err = BuildAuthenticator(s)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid authentication config: %v", err)
+	}
 
-	// TODO (rantuttl): Build Authorizor and implement Admission controls here
+	config.Authorizer, err = BuildAuthorizer(s)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid authorization config: %v", err)
+	}
+
+	// TODO (rantuttl): Build Admission controls here
 
 	v := version.Get()
 	config.Version = &v
@@ -153,6 +163,13 @@ func BuildAuthenticator(s *options.ServerRunOptions) (authenticator.Request, *sp
 	// apply any server run options to an AuthenticationConfig, then return the Authenticator that implements Request interface
 	authenticatorConfig := s.Authentication.ToAuthenticationConfig()
 	return authenticatorConfig.New()
+}
+
+// FIXME (rantuttle): When we need RBAC
+//func BuildAuthorizer(s *options.ServerRunOptions, sharedInformers informers.SharedInformerFactory) (authorizer.Authorizer, error) {
+func BuildAuthorizer(s *options.ServerRunOptions) (authorizer.Authorizer, error) {
+	authorizationConfig := s.Authorization.ToAuthorizationConfig()
+	return authorizationConfig.New()
 }
 
 func BuildStorageFactory(s *options.ServerRunOptions) (*serverstorage.DefaultStorageFactory, error) {

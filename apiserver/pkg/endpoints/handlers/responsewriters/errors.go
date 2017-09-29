@@ -77,7 +77,7 @@ func forbiddenMessage(attributes authorizer.Attributes) string {
 		return fmt.Sprintf("User %q cannot %s %s in the namespace %q.", username, attributes.GetVerb(), resource, ns)
 	}
 
-	return fmt.Sprintf("User %q cannot %s %s at the cluster scope.", username, attributes.GetVerb(), resource)
+	return fmt.Sprintf("User %q cannot %s %s.", username, attributes.GetVerb(), resource)
 }
 
 // InternalError renders a simple internal error

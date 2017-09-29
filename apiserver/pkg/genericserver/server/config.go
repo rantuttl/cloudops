@@ -30,6 +30,7 @@ import (
 	"github.com/rantuttl/cloudops/apiserver/pkg/server/routes"
 	//genericapiserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
 	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/authenticator"
+	"github.com/rantuttl/cloudops/apiserver/pkg/authorization/authorizer"
 	genericapifilters "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/filters"
 	genericfilters "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server/filters"
 	apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
@@ -48,6 +49,9 @@ type Config struct {
 	Serializer runtime.NegotiatedSerializer
 	SecureServingInfo *SecureServingInfo
 	Authenticator authenticator.Request
+	// Authorizer determines whether the subject is allowed to make the request based only
+	// on the RequestURI
+	Authorizer authorizer.Authorizer
 	CorsAllowedOriginList []string
 	BuildHandlerChainFunc func(apiHandler http.Handler, c *Config) (secure http.Handler)
 	EnableSwaggerUI bool
@@ -182,7 +186,7 @@ func (c *Config) ApplyClientCert(clientCAFile string) (*Config, error) {
 func DefaultHandlerChainBuilder(apiHandler http.Handler, c *Config) http.Handler {
 	handler := apiHandler
 	// FIXME (rantuttl): See ./staging/src/k8s.io/apiserver/pkg/server/config.go
-	//handler := genericapifilters.WithAuthorization(apiHandler, c.RequestContextMapper, c.Authorizer, c.Serializer)
+	handler = genericapifilters.WithAuthorization(apiHandler, c.RequestContextMapper, c.Authorizer, c.Serializer)
 	handler = genericapifilters.WithAuthentication(handler, c.RequestContextMapper, c.Authenticator, genericapifilters.Unauthorized(c.RequestContextMapper, c.Serializer, c.SupportsBasicAuth))
 	// etc...
 	// build up the chained handlers here (see filters)

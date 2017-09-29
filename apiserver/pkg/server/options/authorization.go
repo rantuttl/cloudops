@@ -21,9 +21,8 @@ import (
 
 	"github.com/spf13/pflag"
 
-	//informers "k8s.io/kubernetes/pkg/client/informers/informers_generated/internalversion"
-	//"github.com/rantuttl/cloudops/apiserver/pkg/server/authorizer"
-	authzmodes "github.com/rantuttl/cloudops/apiserver/pkg/server/authorizer/modes"
+	"github.com/rantuttl/cloudops/apiserver/pkg/authorization"
+	authzmodes "github.com/rantuttl/cloudops/apiserver/pkg/authorization/modes"
 )
 
 type BuiltInAuthorizationOptions struct {
@@ -45,6 +44,16 @@ func NewBuiltInAuthorizationOptions() *BuiltInAuthorizationOptions {
 func (s *BuiltInAuthorizationOptions) Validate() []error {
 	allErrors := []error{}
 	return allErrors
+}
+
+func (s *BuiltInAuthorizationOptions) AddDeprecatedFlags(fs *pflag.FlagSet) {
+	// place deprecated flags here. For example:
+	//fs.IPVar(&s.BindAddress, "address", s.BindAddress,
+	//      "DEPRECATED: see --insecure-bind-address instead.")
+	//fs.MarkDeprecated("address", "see --insecure-bind-address instead.")
+
+	//fs.IntVar(&s.BindPort, "port", s.BindPort, "DEPRECATED: see --insecure-port instead.")
+	//fs.MarkDeprecated("port", "see --insecure-port instead.")
 }
 
 func (s *BuiltInAuthorizationOptions) AddFlags(fs *pflag.FlagSet) {
@@ -82,16 +91,15 @@ func (s *BuiltInAuthorizationOptions) Modes() []string {
 	return modes
 }
 
-// FIXME (rantuttl): Unlock when we're doing authorization
-/*
-func (s *BuiltInAuthorizationOptions) ToAuthorizationConfig(informerFactory informers.SharedInformerFactory) authorizer.AuthorizationConfig {
-	return authorizer.AuthorizationConfig{
+// FIXME (rantuttl): when informerFactory resolved
+//func (s *BuiltInAuthorizationOptions) ToAuthorizationConfig(informerFactory informers.SharedInformerFactory) authorization.AuthorizationConfig {
+func (s *BuiltInAuthorizationOptions) ToAuthorizationConfig() authorization.AuthorizationConfig {
+	return authorization.AuthorizationConfig{
 		AuthorizationModes:          s.Modes(),
 		PolicyFile:                  s.PolicyFile,
 		WebhookConfigFile:           s.WebhookConfigFile,
 		WebhookCacheAuthorizedTTL:   s.WebhookCacheAuthorizedTTL,
 		WebhookCacheUnauthorizedTTL: s.WebhookCacheUnauthorizedTTL,
-		InformerFactory:             informerFactory,
+		//InformerFactory:             informerFactory,
 	}
 }
-*/
