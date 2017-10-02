@@ -244,7 +244,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 	// A request scope object for handling requests on this resource type within this API group
 	reqScope := handlers.RequestScope{
 		ContextFunc:		ctxFn,
-		Serializer:		a.group.Serializer,
+		Serializer:		a.group.Serializer, // actual CodecFactory for the API group
 		Creater:		a.group.Creater,
 		Copier:			a.group.Copier, // used in update, i.e., PUT
 		Convertor:		a.group.Convertor, // used in list

@@ -70,6 +70,7 @@ func (s *ServerRunOptions) AddFlags(fs *pflag.FlagSet) {
 	s.Authentication.AddFlags(fs)
 	s.Authentication.AddDeprecatedFlags(fs)
 	s.Authorization.AddFlags(fs)
+	s.Authorization.AddDeprecatedFlags(fs)
 
 	// Note: the weird ""+ in below lines seems to be the only way to get gofmt to
 	// arrange these text blocks sensibly. Grrr.
