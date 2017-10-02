@@ -18,7 +18,7 @@ package authenticator
 import (
 	"net/http"
 
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/user"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/user"
 )
 
 // Token checks a string value against a backing authentication store and returns

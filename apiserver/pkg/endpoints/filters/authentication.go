@@ -24,7 +24,7 @@ import (
 	apierrors "github.com/rantuttl/cloudops/apimachinery/pkg/api/errors"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/authenticator"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/authenticator"
 	"github.com/rantuttl/cloudops/apiserver/pkg/endpoints/handlers/responsewriters"
 	"github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
 )

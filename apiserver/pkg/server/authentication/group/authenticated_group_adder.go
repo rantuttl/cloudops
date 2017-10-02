@@ -18,8 +18,8 @@ package group
 import (
 	"net/http"
 
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/authenticator"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/user"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/authenticator"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/user"
 )
 
 // AuthenticatedGroupAdder adds system:authenticated group when appropriate

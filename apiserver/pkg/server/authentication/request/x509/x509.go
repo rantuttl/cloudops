@@ -26,8 +26,8 @@ import (
 
 	utilerrors "github.com/rantuttl/cloudops/apimachinery/pkg/util/errors"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/util/sets"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/authenticator"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/user"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/authenticator"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/user"
 )
 
 // UserConversion defines an interface for extracting user info from a client certificate chain

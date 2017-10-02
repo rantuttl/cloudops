@@ -21,8 +21,8 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/rantuttl/cloudops/apiserver/pkg/authorization"
-	authzmodes "github.com/rantuttl/cloudops/apiserver/pkg/authorization/modes"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authorization"
+	authzmodes "github.com/rantuttl/cloudops/apiserver/pkg/server/authorization/modes"
 )
 
 type BuiltInAuthorizationOptions struct {

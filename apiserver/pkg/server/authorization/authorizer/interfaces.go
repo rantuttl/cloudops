@@ -18,7 +18,7 @@ package authorizer
 import (
 	"net/http"
 
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/user"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/user"
 )
 
 // Attributes is an interface used by an Authorizer to get information about a request

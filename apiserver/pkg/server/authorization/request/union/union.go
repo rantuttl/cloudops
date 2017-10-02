@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	utilerrors "github.com/rantuttl/cloudops/apimachinery/pkg/util/errors"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authorization/authorizer"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authorization/authorizer"
 )
 
 // unionAuthzHandler authorizer against a chain of authorizer.Authorizer

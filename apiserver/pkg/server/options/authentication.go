@@ -24,8 +24,8 @@ import (
 
 	genericserver "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server"
 	genericopts "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/options"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication"
-	authzmodes "github.com/rantuttl/cloudops/apiserver/pkg/server/authorizer/modes"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication"
+	authzmodes "github.com/rantuttl/cloudops/apiserver/pkg/server/authorization/modes"
 )
 
 type BuiltInAuthenticationOptions struct {

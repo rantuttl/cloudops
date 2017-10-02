@@ -21,7 +21,7 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authorization/authorizer"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authorization/authorizer"
 	"github.com/rantuttl/cloudops/apiserver/pkg/endpoints/handlers/responsewriters"
 	"github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
 )

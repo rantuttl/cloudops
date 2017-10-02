@@ -20,10 +20,10 @@ import (
 	"time"
 	"errors"
 
-	"github.com/rantuttl/cloudops/apiserver/pkg/authorization/authorizer"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authorization/authorizer/authorizerfactory"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authorization/request/union"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authorization/modes"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authorization/authorizer"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authorization/authorizer/authorizerfactory"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authorization/request/union"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authorization/modes"
 )
 
 type AuthorizationConfig struct {

@@ -24,7 +24,7 @@ import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime"
 	"github.com/rantuttl/cloudops/apimachinery/pkg/runtime/schema"
 	utilruntime "github.com/rantuttl/cloudops/apimachinery/pkg/util/runtime"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authorization/authorizer"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authorization/authorizer"
 	"github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"
 )
 

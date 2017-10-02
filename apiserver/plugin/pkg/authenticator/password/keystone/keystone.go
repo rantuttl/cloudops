@@ -26,7 +26,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack"
 
 	netutil "github.com/rantuttl/cloudops/apimachinery/pkg/util/net"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/user"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/user"
 	certutil "github.com/rantuttl/cloudops/apiserver/pkg/util/cert"
 )
 

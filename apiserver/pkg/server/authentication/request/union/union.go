@@ -19,8 +19,8 @@ import (
 	"net/http"
 
 	utilerrors "github.com/rantuttl/cloudops/apimachinery/pkg/util/errors"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/authenticator"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/user"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/authenticator"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/user"
 )
 
 // unionAuthRequestHandler authenticates requests using a chain of authenticator.Requests

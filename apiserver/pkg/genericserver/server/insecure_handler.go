@@ -20,7 +20,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/user"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/user"
 	genericapifilters "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/filters"
 	genericfilters "github.com/rantuttl/cloudops/apiserver/pkg/genericserver/server/filters"
 	apirequest "github.com/rantuttl/cloudops/apiserver/pkg/endpoints/request"

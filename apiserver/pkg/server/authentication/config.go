@@ -13,40 +13,49 @@
    under the License.
 */
 
-package authenticator
+package authentication
 
 import (
 	"github.com/go-openapi/spec"
 
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/authenticator"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/group"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/request/union"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/request/anonymous"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/request/x509"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/authenticator"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/request/x509"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/request/anonymous"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/request/union"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/group"
 	"github.com/rantuttl/cloudops/apiserver/plugin/pkg/authenticator/password/keystone"
+	"github.com/rantuttl/cloudops/apiserver/plugin/pkg/authenticator/password/passwordfile"
 	"github.com/rantuttl/cloudops/apiserver/plugin/pkg/authenticator/request/basicauth"
 	certutil "github.com/rantuttl/cloudops/apiserver/pkg/util/cert"
 )
 
 type AuthenticatorConfig struct {
-	// FIXME (rantuttle): Added support for Bearer Token in request header
-	Anonymous                   bool
-	ClientCAFile                string
-	KeystoneURL                 string
-	KeystoneCAFile              string
+	Anonymous			bool
+	BasicAuthFile			string
+	ClientCAFile			string
+	KeystoneURL			string
+	KeystoneCAFile			string
 }
 
-// New returns an authenticator.Request or an error that supports the standard
-// product authentication mechanisms.
-func (config AuthenticatorConfig) New() (authenticator.Request, *spec.SecurityDefinitions, error) {
-	var authenticators []authenticator.Request
-
+// creates a chain of authenticators
+func (c AuthenticatorConfig) New() (authenticator.Request, *spec.SecurityDefinitions, error) {
+	var authenticators  []authenticator.Request
 	securityDefinitions := spec.SecurityDefinitions{}
 	hasBasicAuth := false
 	hasTokenAuth := false
 
-	if len(config.KeystoneURL) > 0 {
-		keystoneAuth, err := newAuthenticatorFromKeystoneURL(config.KeystoneURL, config.KeystoneCAFile)
+	if len(c.BasicAuthFile) > 0 {
+		basicAuth, err := newAuthenticatorFromBasicAuthFile(c.BasicAuthFile)
+		if err != nil {
+			return nil, nil, err
+		}
+		authenticators = append(authenticators, basicAuth)
+		hasBasicAuth = true
+	}
+
+	if len(c.KeystoneURL) > 0 {
+		// basic auth via stored password in keystone
+		keystoneAuth, err := newAuthenticatorFromKeystoneURL(c.KeystoneURL, c.KeystoneCAFile)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -54,12 +63,9 @@ func (config AuthenticatorConfig) New() (authenticator.Request, *spec.SecurityDe
 		hasBasicAuth = true
 	}
 
-	// FIXME (rantuttle): Added support for Bearer Token as X-Auth-Token: request header -- hasTokenAuth = true
-
-
-	// X509 methods
-	if len(config.ClientCAFile) > 0 {
-		certAuth, err := newAuthenticatorFromClientCAFile(config.ClientCAFile)
+	if len(c.ClientCAFile) > 0 {
+		// basic auth via x509 certs
+		certAuth, err := newAuthenticatorFromClientCAFile(c.ClientCAFile)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -70,11 +76,12 @@ func (config AuthenticatorConfig) New() (authenticator.Request, *spec.SecurityDe
 		securityDefinitions["HTTPBasic"] = &spec.SecurityScheme{
 			SecuritySchemeProps: spec.SecuritySchemeProps{
 				Type:        "basic",
-				Description: "HTTP Basic authentication",
+				Name:        "HTTP Basic authentication",
 			},
 		}
 	}
 
+	// TODO (rantuttl): Implement (above) Token support of some type
 	if hasTokenAuth {
 		securityDefinitions["BearerToken"] = &spec.SecurityScheme{
 			SecuritySchemeProps: spec.SecuritySchemeProps{
@@ -86,41 +93,36 @@ func (config AuthenticatorConfig) New() (authenticator.Request, *spec.SecurityDe
 		}
 	}
 
+	// if no authenticators found, then fallback to anonymous if so configured
 	if len(authenticators) == 0 {
-		if config.Anonymous {
+		if c.Anonymous {
 			return anonymous.NewAuthenticator(), &securityDefinitions, nil
 		}
-	}
-
-	switch len(authenticators) {
-	case 0:
 		return nil, &securityDefinitions, nil
 	}
 
+	// this creates a wrapper that implements AuthenticateRequest, but loops through all authenticators
 	authenticator := union.New(authenticators...)
-
+	// implements AuthenticateRequest, and invokes the union's AuthenticateRequest method
 	authenticator = group.NewAuthenticatedGroupAdder(authenticator)
 
-	if config.Anonymous {
+	if c.Anonymous {
 		// If the authenticator chain returns an error, return an error (don't consider a bad bearer token
 		// or invalid username/password combination anonymous).
+		// implements AuthenticateRequest, and invokes the AuthenticatedGroupAdder's AuthenticateRequest
 		authenticator = union.NewFailOnError(authenticator, anonymous.NewAuthenticator())
 	}
 
 	return authenticator, &securityDefinitions, nil
 }
 
-// newAuthenticatorFromClientCAFile returns an authenticator.Request or an error
-func newAuthenticatorFromClientCAFile(clientCAFile string) (authenticator.Request, error) {
-	roots, err := certutil.NewPool(clientCAFile)
+// newAuthenticatorFromBasicAuthFile returns an authenticator.Request or an error
+func newAuthenticatorFromBasicAuthFile(basicAuthFile string) (authenticator.Request, error) {
+	basicAuthenticator, err := passwordfile.NewCSV(basicAuthFile)
 	if err != nil {
 		return nil, err
 	}
-
-	opts := x509.DefaultVerifyOptions()
-	opts.Roots = roots
-
-	return x509.New(opts, x509.CommonNameUserConversion), nil
+	return basicauth.New(basicAuthenticator), nil
 }
 
 // newAuthenticatorFromKeystoneURL returns an authenticator.Request or an error
@@ -129,6 +131,16 @@ func newAuthenticatorFromKeystoneURL(keystoneURL string, keystoneCAFile string) 
 	if err != nil {
 		return nil, err
 	}
-
 	return basicauth.New(keystoneAuthenticator), nil
+}
+
+// newAuthenticatorFromClientCAFile returns an authenticator.Request or an error
+func newAuthenticatorFromClientCAFile(clientCAFile string) (authenticator.Request, error) {
+	roots, err := certutil.NewPool(clientCAFile)
+	if err != nil {
+		return nil, err
+	}
+	opts := x509.DefaultVerifyOptions()
+	opts.Roots = roots
+	return x509.New(opts, x509.CommonNameUserConversion), nil
 }

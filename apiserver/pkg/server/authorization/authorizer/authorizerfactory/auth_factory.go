@@ -18,7 +18,7 @@ package authorizerfactory
 import (
 	"errors"
 
-	"github.com/rantuttl/cloudops/apiserver/pkg/authorization/authorizer"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authorization/authorizer"
 )
 
 // alwaysAllowAuthorizer is an implementation of authorizer.Attributes

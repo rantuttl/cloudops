@@ -23,7 +23,7 @@ import (
 	"github.com/rantuttl/cloudops/apimachinery/pkg/types"
 	// FIXME (rantuttl): Figure out how to use this. In the meantime, comment
 	//"k8s.io/apiserver/pkg/apis/audit"
-	"github.com/rantuttl/cloudops/apiserver/pkg/authentication/user"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/user"
 )
 
 // Context carries values across API boundaries.

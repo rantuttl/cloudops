@@ -13,25 +13,23 @@
    under the License.
 */
 
-package modes
+package anonymous
 
-const (
-	ModeAlwaysAllow string = "AlwaysAllow"
-	ModeAlwaysDeny  string = "AlwaysDeny"
-	ModeABAC        string = "ABAC"
-	ModeWebhook     string = "Webhook"
-	ModeRBAC        string = "RBAC"
-	ModeNode        string = "Node"
+import (
+	"net/http"
+
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/authenticator"
+	"github.com/rantuttl/cloudops/apiserver/pkg/server/authentication/user"
 )
 
-var AuthorizationModeChoices = []string{ModeAlwaysAllow, ModeAlwaysDeny, ModeABAC, ModeWebhook, ModeRBAC, ModeNode}
+const (
+	anonymousUser = user.Anonymous
 
-// IsValidAuthorizationMode returns true if the given authorization mode is a valid one for the apiserver
-func IsValidAuthorizationMode(authzMode string) bool {
-	for _, validMode := range AuthorizationModeChoices {
-		if authzMode == validMode {
-			return true
-		}
-	}
-	return false
+	unauthenticatedGroup = user.AllUnauthenticated
+)
+
+func NewAuthenticator() authenticator.Request {
+	return authenticator.RequestFunc(func(req *http.Request) (user.Info, bool, error) {
+		return &user.DefaultInfo{Name: anonymousUser, Groups: []string{unauthenticatedGroup}}, true, nil
+	})
 }
