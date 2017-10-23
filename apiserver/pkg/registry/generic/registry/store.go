@@ -185,10 +185,11 @@ func (e *Store) CompleteWithOptions(options *generic.StoreOptions) error {
 		}
 	}
 
-	// TODO (rantuttl): Define how to reach backend store
+	// Create a backend reference for this REST store resource
 	if e.Backend == nil {
 		e.Backend = opts.Decorator(
 			opts.BackendConfig,
+			options.Transformer,
 		)
 	}
 

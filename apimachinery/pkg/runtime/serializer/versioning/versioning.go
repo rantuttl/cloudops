@@ -202,6 +202,7 @@ func (c *codec) Decode(data []byte, defaultGVK *schema.GroupVersionKind, into ru
 // Encode ensures the provided object is output in the appropriate group and version, invoking
 // conversion if necessary. Unversioned objects (according to the ObjectTyper) are output as is.
 func (c *codec) Encode(obj runtime.Object, w io.Writer) error {
+	glog.Info("Encode Stage A")
 	switch obj.(type) {
 	case *runtime.Unknown, runtime.Unstructured:
 		return c.encoder.Encode(obj, w)
@@ -212,7 +213,9 @@ func (c *codec) Encode(obj runtime.Object, w io.Writer) error {
 		return err
 	}
 
+	glog.Info("Encode Stage B")
 	if c.encodeVersion == nil || isUnversioned {
+		glog.Info("Encode Stage B1")
 		if e, ok := obj.(runtime.NestedObjectEncoder); ok {
 			if err := e.EncodeNestedObjects(DirectEncoder{Encoder: c.encoder, ObjectTyper: c.typer}); err != nil {
 				return err
@@ -226,6 +229,7 @@ func (c *codec) Encode(obj runtime.Object, w io.Writer) error {
 		return err
 	}
 
+	glog.Info("Encode Stage C")
 	// Perform a conversion if necessary
 	objectKind := obj.GetObjectKind()
 	old := objectKind.GroupVersionKind()
@@ -234,12 +238,15 @@ func (c *codec) Encode(obj runtime.Object, w io.Writer) error {
 		return err
 	}
 
+	glog.Info("Encode Stage D")
 	if e, ok := out.(runtime.NestedObjectEncoder); ok {
+		glog.Info("Encode Stage D1")
 		if err := e.EncodeNestedObjects(DirectEncoder{Version: c.encodeVersion, Encoder: c.encoder, ObjectTyper: c.typer}); err != nil {
 			return err
 		}
 	}
 
+	glog.Info("Encode Stage E")
 	// Conversion is responsible for setting the proper group, version, and kind onto the outgoing object
 	err = c.encoder.Encode(out, w)
 	// restore the old GVK, in case conversion returned the same object

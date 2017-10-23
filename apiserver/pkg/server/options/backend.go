@@ -30,7 +30,7 @@ type BackendOptions struct {
 	BackendConfig	backend.Config
 }
 
-func NewBackendOptions (backendConfig *backend.Config) *BackendOptions {
+func NewBackendOptions(backendConfig *backend.Config) *BackendOptions {
 	return &BackendOptions{
 		BackendConfig:	*backendConfig,
 	}

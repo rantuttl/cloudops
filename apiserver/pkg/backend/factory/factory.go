@@ -19,6 +19,9 @@ import (
 	"github.com/rantuttl/cloudops/apiserver/pkg/backend"
 )
 
-func Create(c backend.Config) (backend.Interface, error) {
-	return newBackend(c), nil
+func Create(c backend.Config, transformer backend.BackendTransformer) (backend.Interface, error) {
+	if _, isTransformer := transformer.(backend.BackendTransformer); isTransformer {
+		transformer.BackendTransformerInitializer(c)
+	}
+	return newBackend(c, transformer), nil
 }

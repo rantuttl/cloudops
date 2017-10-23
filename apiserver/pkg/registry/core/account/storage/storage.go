@@ -33,7 +33,6 @@ type REST struct {
 }
 
 func NewREST(optsGetter generic.RESTOptionsGetter) *REST {
-	// FIXME (rantuttl): Partially stubbed for now...
 	store := &genericregistry.Store{
 		NewFunc:		func() runtime.Object { return &core.Account{} },
 		NewListFunc:		func() runtime.Object { return &core.AccountList{} },
@@ -45,7 +44,10 @@ func NewREST(optsGetter generic.RESTOptionsGetter) *REST {
 	}
 	// FIXME (rantuttl)
 	//options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: account.GetAttrs}
-	options := &generic.StoreOptions{RESTOptions: optsGetter}
+	options := &generic.StoreOptions{
+		RESTOptions: optsGetter,
+		Transformer: &accountTransformer{resource: "accounts"},
+	}
 	if err := store.CompleteWithOptions(options); err != nil {
 		panic(err)
 	}
@@ -66,6 +68,9 @@ func (r *REST) Create(ctx genericapirequest.Context, obj runtime.Object, include
 	return r.store.Create(ctx, obj, includeUninitialized)
 }
 
+// TODO (rantuttl): Switch to GetterWithOptions interface support. This will allow us to add query parms to
+// the resource. The 'Get' signature has a different type for options. Will also need to implement 'NewGetOptions'
+// method to support the installer. It will return the type (e.g., AccountOptions) to support the query parms.
 func (r *REST) Get(ctx genericapirequest.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return r.store.Get(ctx, name, options)
 }

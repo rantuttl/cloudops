@@ -30,3 +30,9 @@ type Interface interface {
 
 	Delete(ctx context.Context, key string, out runtime.Object, preconditions *metav1.Preconditions) error
 }
+
+type BackendTransformer interface {
+	BackendTransformerInitializer(config Config) error
+	TransformToBackend(ctx context.Context, data string) (string, error)
+	TransformFromBackend(ctx context.Context, data string) (string, error)
+}

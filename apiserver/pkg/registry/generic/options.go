@@ -34,6 +34,7 @@ type RESTOptionsGetter interface {
 // StoreOptions is set of configuration options used to complete generic registries.
 type StoreOptions struct {
 	RESTOptions RESTOptionsGetter
+	Transformer backend.BackendTransformer
 	// FIXME (rantuttl): Decide if we need these
 	//TriggerFunc storage.TriggerPublisherFunc
 	//AttrFunc    storage.AttrFunc

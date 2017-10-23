@@ -29,7 +29,7 @@ type RequestInfo struct {
 	IsResourceRequest bool
 	// Path is the URL path of the request
 	Path string
-	// Verb is the kube verb associated with the request for API requests, not the http verb.  This includes things like list and watch.
+	// Verb is the verb associated with the request for API requests, not the http verb.  This includes things like list and watch.
 	// for non-resource requests, this is the lowercase http verb
 	Verb string
 
@@ -48,6 +48,15 @@ type RequestInfo struct {
 	// Parts are the path parts for the request, always starting with /{resource}/{name}
 	Parts []string
 }
+
+const (
+	CREATE string = "create"
+	UPDATE string = "update"
+	GET string = "get"
+	DELETE string = "delete"
+	PATCH string = "patch"
+	DEFAULT string = ""
+)
 
 // specialVerbs contains just strings which are used in REST paths for special actions that don't fall under the normal
 // CRUDdy GET/POST/PUT/DELETE actions on REST objects.
@@ -137,17 +146,17 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 	} else {
 		switch req.Method {
 		case "POST":
-			requestInfo.Verb = "create"
+			requestInfo.Verb = CREATE
 		case "GET", "HEAD":
-			requestInfo.Verb = "get"
+			requestInfo.Verb = GET
 		case "PUT":
-			requestInfo.Verb = "update"
+			requestInfo.Verb = UPDATE
 		case "PATCH":
-			requestInfo.Verb = "patch"
+			requestInfo.Verb = PATCH
 		case "DELETE":
-			requestInfo.Verb = "delete"
+			requestInfo.Verb = DELETE
 		default:
-			requestInfo.Verb = ""
+			requestInfo.Verb = DEFAULT
 		}
 	}
 

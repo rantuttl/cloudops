@@ -22,15 +22,14 @@ import (
 	"github.com/rantuttl/cloudops/apiserver/pkg/backend/factory"
 )
 
-type BackendDecorator func(
-	config *backend.Config) (backend.Interface)
+type BackendDecorator func(config *backend.Config, transformer backend.BackendTransformer) (backend.Interface)
 
-func UndecoratedBackend(config *backend.Config) (backend.Interface) {
-	return NewBackend(config)
+func UndecoratedBackend(config *backend.Config, transformer backend.BackendTransformer) (backend.Interface) {
+	return NewBackend(config, transformer)
 }
 
-func NewBackend(config *backend.Config) (backend.Interface) {
-	s, err := factory.Create(*config)
+func NewBackend(config *backend.Config, transformer backend.BackendTransformer) (backend.Interface) {
+	s, err := factory.Create(*config, transformer)
 	if err != nil {
 		glog.Fatalf("Unable to create backend: config (%v), err (%v)", config, err)
 	}
