@@ -9,8 +9,6 @@ BASE_DIR?=$(dir $(lastword $(MAKEFILE_LIST)))
 SOURCE_DIR:=$(abspath $(BASE_DIR))
 ###############################################################################
 
-GOLANG_IMAGE?=golang:1.7.5
-
 CONTAINER_BUILD_ARGS?=
 BINARY_IMAGE_NAME?=cloudops-api
 BASE_BUILD_CONTAINER?=cloudops-build
