@@ -26,7 +26,7 @@ cloudops-api-base:
 cloudops-api-base-if:
 	@echo "\033[92m\n\nChecking base build container existence: $(BASE_BUILD_CONTAINER)\033[0m"
 	@echo "-----------------------------------------------------------------"
-	docker images $(BASE_BUILD_CONTAINER):latest | grep "$(BASE_BUILD_CONTAINER)\s*latest" || $(MAKE) cloudops-api-base
+	docker images | grep "$(BASE_BUILD_CONTAINER)\s*latest" || $(MAKE) cloudops-api-base
 
 cloudops-api-binary: cloudops-api-base-if
 	@echo "\033[92m\n\nBuilding binary: $(BINARY_IMAGE_NAME)\033[0m"
