@@ -12,5 +12,10 @@ pipeline {
                 sh 'make'
             }
         }
+        stage('Deploy') {
+            steps {
+                sh 'make deploy'
+            }
+        }
     }
 }

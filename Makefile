@@ -3,6 +3,7 @@
 all: binaries
 binaries: cloudops-api-binary
 test: cloudops-api-unit-test
+deploy: cloudops-api-deploy
 
 ###############################################################################
 # Default value: directory with Makefile
@@ -10,6 +11,7 @@ BASE_DIR?=$(dir $(lastword $(MAKEFILE_LIST)))
 SOURCE_DIR:=$(abspath $(BASE_DIR))
 ###############################################################################
 
+CONTAINER_ARCHIVE?=rtuttle/$(BINARY_IMAGE_NAME):latest
 CONTAINER_BUILD_ARGS?=
 BINARY_IMAGE_NAME?=cloudops-api
 BASE_BUILD_CONTAINER?=cloudops-build
@@ -41,3 +43,11 @@ cloudops-api-unit-test: cloudops-api-base-if
 	docker run --rm -v $(SOURCE_DIR):$(REPO_LOCATION) -w $(REPO_LOCATION) \
 		$(BASE_BUILD_CONTAINER) \
 		/bin/bash -c 'go test ./...'
+
+cloudops-api-deploy: cloudops-api-binary
+	@echo "\033[92m\n\nCopying binary $(BINARY_IMAGE_NAME) to archive \033[0m"
+	@echo "-----------------------------------------------------------------"
+	cp $(SOURCE_DIR)/dist/$(BINARY_IMAGE_NAME) $(SOURCE_DIR)/build
+	docker build -t $(CONTAINER_ARCHIVE) $(SOURCE_DIR)/build
+	docker push $(CONTAINER_ARCHIVE)
+	-rm $(SOURCE_DIR)/build/$(BINARY_IMAGE_NAME)
