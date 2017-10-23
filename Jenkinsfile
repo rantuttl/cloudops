@@ -20,8 +20,8 @@ pipeline {
         stage('Push Image') {
             steps {
                 script {
-                    image = docker.image('cloudops-api:latest')
-                    docker.withRegistry('rtuttle', '28252db1-5f52-4fb4-8776-041a14f362de') {
+                    image = docker.image('rtuttle/cloudops-api:latest')
+                    docker.withRegistry('https://registry.hub.docker.com', '28252db1-5f52-4fb4-8776-041a14f362de') {
                         image.push()
                     }
                 }
