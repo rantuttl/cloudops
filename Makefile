@@ -2,6 +2,7 @@
 
 all: binaries
 binaries: cloudops-api-binary
+test: cloudops-api-unit-test
 
 ###############################################################################
 # Default value: directory with Makefile
@@ -33,3 +34,10 @@ cloudops-api-binary: cloudops-api-base-if
 	docker run --rm -v $(SOURCE_DIR):$(REPO_LOCATION) -w $(REPO_LOCATION) \
 		$(BASE_BUILD_CONTAINER) \
 		/bin/bash -c 'go build -o dist/$(BINARY_IMAGE_NAME) && chown $(shell id -u):$(shell id -g) -R dist/'
+
+cloudops-api-unit-test: cloudops-api-base-if
+	@echo "\033[92m\n\nUnit testing $(BINARY_IMAGE_NAME)\033[0m"
+	@echo "-----------------------------------------------------------------"
+	docker run --rm -v $(SOURCE_DIR):$(REPO_LOCATION) -w $(REPO_LOCATION) \
+		$(BASE_BUILD_CONTAINER) \
+		/bin/bash -c 'go test ./...'
