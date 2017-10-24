@@ -360,6 +360,11 @@ func NewGenericServerResponse(code int, verb string, qualifiedResource schema.Gr
 	}}
 }
 
+// IsServiceUnavailable returns true if the specified error was created by NewServiceUnavailable
+func IsServiceUnavailable(err error) bool {
+	return reasonForError(err) == metav1.StatusReasonServiceUnavailable
+}
+
 // IsNotFound returns true if the specified error was created by NewNotFound.
 func IsNotFound(err error) bool {
 	return reasonForError(err) == metav1.StatusReasonNotFound

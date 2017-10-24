@@ -359,3 +359,174 @@ func coerceResourceForMatching(resource schema.GroupVersionResource) schema.Grou
 
 	return resource
 }
+
+type resourceByPreferredGroupVersion struct {
+	list      []schema.GroupVersionResource
+	sortOrder []schema.GroupVersion
+}
+
+func (o resourceByPreferredGroupVersion) Len() int      { return len(o.list) } 
+func (o resourceByPreferredGroupVersion) Swap(i, j int) { o.list[i], o.list[j] = o.list[j], o.list[i] }
+func (o resourceByPreferredGroupVersion) Less(i, j int) bool {
+	lhs := o.list[i]
+	rhs := o.list[j]
+	if lhs == rhs {
+		return false
+	}
+
+	if lhs.GroupVersion() == rhs.GroupVersion() {
+		return lhs.Resource < rhs.Resource
+	}
+
+	// otherwise, the difference is in the GroupVersion, so we need to sort with respect to the preferred order
+	lhsIndex := -1
+	rhsIndex := -1
+
+	for i := range o.sortOrder {
+		if o.sortOrder[i] == lhs.GroupVersion() {
+			lhsIndex = i
+		}
+		if o.sortOrder[i] == rhs.GroupVersion() {
+			rhsIndex = i
+		}
+	}
+
+	if rhsIndex == -1 {
+		return true
+	}
+
+	return lhsIndex < rhsIndex
+}
+
+
+func (m *DefaultRESTMapper) ResourcesFor(input schema.GroupVersionResource) ([]schema.GroupVersionResource, error) {
+	resource := coerceResourceForMatching(input)
+
+	hasResource := len(resource.Resource) > 0
+	hasGroup := len(resource.Group) > 0
+	hasVersion := len(resource.Version) > 0
+
+	if !hasResource {
+		return nil, fmt.Errorf("a resource must be present, got: %v", resource)
+	}
+
+	ret := []schema.GroupVersionResource{}
+	switch {
+	case hasGroup && hasVersion:
+		// fully qualified.  Find the exact match
+		for plural, singular := range m.pluralToSingular {
+			if singular == resource {
+				ret = append(ret, plural)
+				break
+			}
+			if plural == resource {
+				ret = append(ret, plural)
+				break
+			}
+		}
+
+	case hasGroup:
+		// given a group, prefer an exact match.  If you don't find one, resort to a prefix match on group
+		foundExactMatch := false
+		requestedGroupResource := resource.GroupResource()
+		for plural, singular := range m.pluralToSingular {
+			if singular.GroupResource() == requestedGroupResource {
+				foundExactMatch = true
+				ret = append(ret, plural)
+			}
+			if plural.GroupResource() == requestedGroupResource {
+				foundExactMatch = true
+				ret = append(ret, plural)
+			}
+		}
+
+		// if you didn't find an exact match, match on group prefixing. This allows storageclass.storage to match
+		// storageclass.storage.k8s.io
+		if !foundExactMatch {
+			for plural, singular := range m.pluralToSingular {
+				if !strings.HasPrefix(plural.Group, requestedGroupResource.Group) {
+					continue
+				}
+				if singular.Resource == requestedGroupResource.Resource {
+					ret = append(ret, plural)
+				}
+				if plural.Resource == requestedGroupResource.Resource {
+					ret = append(ret, plural)
+				}
+			}
+
+		}
+
+	case hasVersion:
+		for plural, singular := range m.pluralToSingular {
+			if singular.Version == resource.Version && singular.Resource == resource.Resource {
+				ret = append(ret, plural)
+			}
+			if plural.Version == resource.Version && plural.Resource == resource.Resource {
+				ret = append(ret, plural)
+			}
+		}
+
+	default:
+		for plural, singular := range m.pluralToSingular {
+			if singular.Resource == resource.Resource {
+				ret = append(ret, plural)
+			}
+			if plural.Resource == resource.Resource {
+				ret = append(ret, plural)
+			}
+		}
+	}
+
+	if len(ret) == 0 {
+		return nil, &NoResourceMatchError{PartialResource: resource}
+	}
+
+	sort.Sort(resourceByPreferredGroupVersion{ret, m.defaultGroupVersions})
+	return ret, nil
+}
+
+func (m *DefaultRESTMapper) ResourceFor(resource schema.GroupVersionResource) (schema.GroupVersionResource, error) {
+	resources, err := m.ResourcesFor(resource)
+	if err != nil {
+		return schema.GroupVersionResource{}, err
+	}
+	if len(resources) == 1 {
+		return resources[0], nil
+	}
+
+	return schema.GroupVersionResource{}, &AmbiguousResourceError{PartialResource: resource, MatchingResources: resources}
+}
+
+// ResourceSingularizer implements RESTMapper
+// It converts a resource name from plural to singular (e.g., from pods to pod)
+func (m *DefaultRESTMapper) ResourceSingularizer(resourceType string) (string, error) {
+	partialResource := schema.GroupVersionResource{Resource: resourceType}
+	resources, err := m.ResourcesFor(partialResource)
+	if err != nil {
+		return resourceType, err
+	}
+
+	singular := schema.GroupVersionResource{}
+	for _, curr := range resources {
+		currSingular, ok := m.pluralToSingular[curr]
+		if !ok {
+			continue
+		}
+		if singular.Empty() {
+			singular = currSingular
+			continue
+		}
+
+		if currSingular.Resource != singular.Resource {
+			return resourceType, fmt.Errorf("multiple possible singular resources (%v) found for %v", resources, resourceType)
+		}
+	}
+
+	if singular.Empty() {
+		return resourceType, fmt.Errorf("no singular of resource %v has been defined", resourceType)
+	}
+
+	return singular.Resource, nil
+}
+
